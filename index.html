@@ -354,6 +354,39 @@ body {
   .gua-card__name { font-size: 1.5rem; }
 }
 
+/* ===== LANG TOGGLE ===== */
+.lang-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--bg-card);
+  border: 1px solid rgba(212,165,116,0.2);
+  border-radius: 20px;
+  padding: 3px;
+  backdrop-filter: blur(10px);
+}
+.lang-toggle__btn {
+  padding: 0.3rem 0.7rem;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-dim);
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+.lang-toggle__btn--active {
+  background: linear-gradient(135deg, var(--gold), var(--gold-bright));
+  color: var(--bg-deep);
+  font-weight: 700;
+}
+
 /* Loading shimmer */
 .loading-ring {
   width: 50px; height: 50px;
@@ -370,7 +403,73 @@ body {
 <div id="root"></div>
 <canvas id="bg-canvas"></canvas>
 <script type="text/babel">
-const { useState, useEffect, useRef, useCallback } = React;
+const { useState, useEffect, useRef, useCallback, createContext, useContext } = React;
+
+/* ========== I18N ========== */
+const I18N = {
+  zh: {
+    title: '梅花易数',
+    subtitle: '数 字 起 卦',
+    inputLabel: '请输入数字',
+    inputHint: '输入一至三个正整数，心中默念所问之事',
+    placeholder: ['数一','数二','数三'],
+    divineBtn: '起 卦',
+    benGua: '本 卦',
+    bianGua: '变 卦',
+    huGua: '互 卦',
+    tiYongTitle: '体用分析',
+    tiGua: '体卦',
+    yongGua: '用卦',
+    changingLine: (n, pos) => `动爻在第 ${n} 爻（${pos}）`,
+    lowerGua: '下卦',
+    upperGua: '上卦',
+    wuxingRelation: '五行关系',
+    fortuneTitle: '吉凶断语',
+    footer: ['梅花易数，宋代邵雍所创，以数起卦，万物皆数。','凡所见所闻，皆可化数成卦，以测吉凶祸福。'],
+    elements: { '金':'金','水':'水','木':'木','火':'火','土':'土' },
+    relations: {
+      '比和': { relation:'比和', fortune:'平', desc:'体用比和，事可成' },
+      '体生用': { relation:'体生用', fortune:'凶', desc:'体生用，耗泄精力，不利' },
+      '用生体': { relation:'用生体', fortune:'吉', desc:'用生体，得助益，大吉' },
+      '体克用': { relation:'体克用', fortune:'小吉', desc:'体克用，可得财，小吉' },
+      '用克体': { relation:'用克体', fortune:'凶', desc:'用克体，受制约，不利' },
+    },
+    fortunes: { '吉':'吉','小吉':'小吉','凶':'凶','平':'平' },
+  },
+  en: {
+    title: 'Plum Blossom Oracle',
+    subtitle: 'N U M B E R   D I V I N A T I O N',
+    inputLabel: 'Enter Numbers',
+    inputHint: 'Input 1 to 3 positive integers while focusing on your question',
+    placeholder: ['1st','2nd','3rd'],
+    divineBtn: 'D I V I N E',
+    benGua: 'Primary',
+    bianGua: 'Changed',
+    huGua: 'Mutual Hexagram',
+    tiYongTitle: 'Ti-Yong Analysis',
+    tiGua: 'Ti (Self)',
+    yongGua: 'Yong (Object)',
+    changingLine: (n, pos) => `Changing line at position ${n} (${pos})`,
+    lowerGua: 'Lower',
+    upperGua: 'Upper',
+    wuxingRelation: 'Five Elements',
+    fortuneTitle: 'Fortune Reading',
+    footer: ['Plum Blossom Numerology, created by Shao Yong in the Song Dynasty.','All things are numbers — numbers reveal the Dao.'],
+    elements: { '金':'Metal','水':'Water','木':'Wood','火':'Fire','土':'Earth' },
+    relations: {
+      '比和': { relation:'Harmony', fortune:'Neutral', desc:'Ti and Yong in harmony — matters can proceed.' },
+      '体生用': { relation:'Ti generates Yong', fortune:'Unfavorable', desc:'Energy drains outward — not advantageous.' },
+      '用生体': { relation:'Yong generates Ti', fortune:'Auspicious', desc:'Receiving external support — greatly auspicious.' },
+      '体克用': { relation:'Ti controls Yong', fortune:'Slightly Auspicious', desc:'In control of the situation — minor gain.' },
+      '用克体': { relation:'Yong controls Ti', fortune:'Unfavorable', desc:'Constrained by external forces — not favorable.' },
+    },
+    fortunes: { '吉':'Auspicious','小吉':'Fair','凶':'Unfavorable','平':'Neutral' },
+  }
+};
+
+const LangContext = createContext('zh');
+function useLang() { return useContext(LangContext); }
+function t(lang) { return I18N[lang]; }
 
 /* ========== DATA ========== */
 const TRIGRAMS = [
@@ -409,14 +508,14 @@ const ELEMENT_ORDER = ['金','水','木','火','土'];
 // 生: 金生水, 水生木, 木生火, 火生土, 土生金
 // 克: 金克木, 木克土, 土克水, 水克火, 火克金
 function getRelation(tiElement, yongElement) {
-  if (tiElement === yongElement) return { relation:'比和', fortune:'平', desc:'体用比和，事可成' };
+  if (tiElement === yongElement) return { key:'比和', fortune:'平' };
   const gen = { '金':'水','水':'木','木':'火','火':'土','土':'金' };
   const ke  = { '金':'木','木':'土','土':'水','水':'火','火':'金' };
-  if (gen[tiElement] === yongElement) return { relation:'体生用', fortune:'凶', desc:'体生用，耗泄精力，不利' };
-  if (gen[yongElement] === tiElement) return { relation:'用生体', fortune:'吉', desc:'用生体，得助益，大吉' };
-  if (ke[tiElement] === yongElement)  return { relation:'体克用', fortune:'小吉', desc:'体克用，可得财，小吉' };
-  if (ke[yongElement] === tiElement)  return { relation:'用克体', fortune:'凶', desc:'用克体，受制约，不利' };
-  return { relation:'未知', fortune:'平', desc:'' };
+  if (gen[tiElement] === yongElement) return { key:'体生用', fortune:'凶' };
+  if (gen[yongElement] === tiElement) return { key:'用生体', fortune:'吉' };
+  if (ke[tiElement] === yongElement)  return { key:'体克用', fortune:'小吉' };
+  if (ke[yongElement] === tiElement)  return { key:'用克体', fortune:'凶' };
+  return { key:'比和', fortune:'平' };
 }
 
 /* ========== DIVINATION LOGIC ========== */
@@ -540,41 +639,57 @@ function GuaCard({ tag, name, lines, changeLine, delay }) {
 }
 
 function ResultSection({ result }) {
+  const lang = useLang();
+  const T = t(lang);
   const { benLines, benName, bianLines, bianName, huName, changeLine, ti, yong, rel, upperTri, lowerTri } = result;
-  const fortuneClass = rel.fortune === '吉' || rel.fortune === '小吉' ? 'fortune-badge--ji'
+  const relData = T.relations[rel.key];
+  const fortuneLabel = T.fortunes[rel.fortune];
+  const fortuneClass = (rel.fortune === '吉' || rel.fortune === '小吉') ? 'fortune-badge--ji'
     : rel.fortune === '凶' ? 'fortune-badge--xiong' : 'fortune-badge--ping';
 
   return (
     <div className="result">
       <div className="result__row">
-        <GuaCard tag="本 卦" name={benName} lines={benLines} changeLine={changeLine} delay={0.1} />
-        <GuaCard tag="变 卦" name={bianName} lines={bianLines} changeLine={0} delay={0.25} />
+        <GuaCard tag={T.benGua} name={benName} lines={benLines} changeLine={changeLine} delay={0.1} />
+        <GuaCard tag={T.bianGua} name={bianName} lines={bianLines} changeLine={0} delay={0.25} />
       </div>
 
       <div className="info-card info-card--delay1" style={{ marginBottom: 14 }}>
-        <div className="info-card__title">互 卦</div>
+        <div className="info-card__title">{T.huGua}</div>
         <div className="info-card__body"><strong>{huName}</strong></div>
       </div>
 
       <div className="info-card info-card--delay2" style={{ marginBottom: 14 }}>
-        <div className="info-card__title">体用分析</div>
+        <div className="info-card__title">{T.tiYongTitle}</div>
         <div className="info-card__body">
-          <strong>体卦</strong>：{ti.name}（{ti.symbol}）— {ti.element}
-          <strong>用卦</strong>：{yong.name}（{yong.symbol}）— {yong.element}
+          <strong>{T.tiGua}</strong>：{ti.name}（{ti.symbol}）— {T.elements[ti.element]}
+          {' '}<strong>{T.yongGua}</strong>：{yong.name}（{yong.symbol}）— {T.elements[yong.element]}
           <div className="divider"></div>
-          动爻在第 <strong>{changeLine}</strong> 爻（{changeLine <= 3 ? '下卦' : '上卦'}）
-          <br/>五行关系：<strong>{rel.relation}</strong>
+          {T.changingLine(changeLine, changeLine <= 3 ? T.lowerGua : T.upperGua)}
+          <br/>{T.wuxingRelation}：<strong>{relData.relation}</strong>
         </div>
       </div>
 
       <div className="info-card info-card--delay3">
-        <div className="info-card__title">吉凶断语</div>
+        <div className="info-card__title">{T.fortuneTitle}</div>
         <div className="info-card__body">
-          {rel.desc}
+          {relData.desc}
           <br/>
-          <span className={`fortune-badge ${fortuneClass}`}>{rel.fortune}</span>
+          <span className={`fortune-badge ${fortuneClass}`}>{fortuneLabel}</span>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ========== LANG TOGGLE ========== */
+function LangToggle({ lang, setLang }) {
+  return (
+    <div className="lang-toggle">
+      <button className={`lang-toggle__btn ${lang==='zh'?'lang-toggle__btn--active':''}`}
+        onClick={()=>setLang('zh')}>中文</button>
+      <button className={`lang-toggle__btn ${lang==='en'?'lang-toggle__btn--active':''}`}
+        onClick={()=>setLang('en')}>EN</button>
     </div>
   );
 }
@@ -586,6 +701,11 @@ function App() {
   const [n3, setN3] = useState('');
   const [result, setResult] = useState(null);
   const [key, setKey] = useState(0);
+  const [lang, setLang] = useState(() => {
+    try { return (navigator.language || '').startsWith('zh') ? 'zh' : 'en'; }
+    catch(e) { return 'zh'; }
+  });
+  const T = t(lang);
 
   const handleDivine = () => {
     const nums = [n1, n2, n3].map(Number).filter(v => v > 0 && Number.isInteger(v));
@@ -597,33 +717,33 @@ function App() {
   const onKeyDown = (e) => { if (e.key === 'Enter') handleDivine(); };
 
   return (
-    <React.Fragment>
+    <LangContext.Provider value={lang}>
+      <LangToggle lang={lang} setLang={setLang} />
       <header className="header">
         <TaijiSVG />
-        <h1 className="header__title">梅花易数</h1>
-        <p className="header__sub">数 字 起 卦</p>
+        <h1 className="header__title">{lang === 'zh' ? '梅花易数' : T.title}</h1>
+        <p className="header__sub">{T.subtitle}</p>
       </header>
       <main className="container">
         <section className="altar">
-          <div className="altar__label">请输入数字</div>
-          <div className="altar__hint">输入一至三个正整数，心中默念所问之事</div>
+          <div className="altar__label">{T.inputLabel}</div>
+          <div className="altar__hint">{T.inputHint}</div>
           <div className="altar__inputs">
-            <input className="altar__input" type="number" min="1" placeholder="数一"
+            <input className="altar__input" type="number" min="1" placeholder={T.placeholder[0]}
               value={n1} onChange={e=>setN1(e.target.value)} onKeyDown={onKeyDown}/>
-            <input className="altar__input" type="number" min="1" placeholder="数二"
+            <input className="altar__input" type="number" min="1" placeholder={T.placeholder[1]}
               value={n2} onChange={e=>setN2(e.target.value)} onKeyDown={onKeyDown}/>
-            <input className="altar__input" type="number" min="1" placeholder="数三"
+            <input className="altar__input" type="number" min="1" placeholder={T.placeholder[2]}
               value={n3} onChange={e=>setN3(e.target.value)} onKeyDown={onKeyDown}/>
           </div>
-          <button className="altar__btn" onClick={handleDivine}>起 卦</button>
+          <button className="altar__btn" onClick={handleDivine}>{T.divineBtn}</button>
         </section>
         {result && <ResultSection key={key} result={result} />}
       </main>
       <footer className="footer">
-        梅花易数，宋代邵雍所创，以数起卦，万物皆数。<br/>
-        凡所见所闻，皆可化数成卦，以测吉凶祸福。
+        {T.footer[0]}<br/>{T.footer[1]}
       </footer>
-    </React.Fragment>
+    </LangContext.Provider>
   );
 }
 
