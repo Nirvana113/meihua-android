@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>梅花易数 · 数字起卦</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700;900&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --bg-deep: #06060f;
+  --bg-card: rgba(12,12,30,0.85);
+  --gold: #d4a574;
+  --gold-bright: #f0c87a;
+  --gold-glow: rgba(212,165,116,0.4);
+  --jade: #3abfad;
+  --jade-glow: rgba(58,191,173,0.35);
+  --crimson: #c0392b;
+  --text: #e8dcc8;
+  --text-dim: #8a8072;
+  --font-display: 'Ma Shan Zheng', cursive;
+  --font-body: 'Noto Serif SC', 'Songti SC', serif;
+  --font-accent: 'ZCOOL XiaoWei', serif;
+}
+
+html { font-size: 16px; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg-deep);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+#bg-canvas {
+  position: fixed; top:0; left:0; width:100%; height:100%;
+  z-index: 0; pointer-events: none;
+}
+
+#root { position: relative; z-index: 1; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
+
+/* ===== HEADER ===== */
+.header {
+  text-align: center;
+  padding: 3rem 1rem 2rem;
+  position: relative;
+}
+.header__taiji {
+  width: 70px; height: 70px;
+  margin: 0 auto 1rem;
+  animation: taiji-spin 20s linear infinite;
+  filter: drop-shadow(0 0 18px var(--gold-glow));
+}
+@keyframes taiji-spin { to { transform: rotate(360deg); } }
+
+.header__title {
+  font-family: var(--font-display);
+  font-size: clamp(2.8rem, 8vw, 4.5rem);
+  color: var(--gold-bright);
+  letter-spacing: 0.15em;
+  text-shadow: 0 0 30px var(--gold-glow), 0 2px 4px rgba(0,0,0,0.6);
+  line-height: 1.2;
+}
+.header__sub {
+  font-family: var(--font-accent);
+  font-size: 1rem;
+  color: var(--text-dim);
+  margin-top: 0.4rem;
+  letter-spacing: 0.3em;
+}
+
+/* ===== MAIN CONTAINER ===== */
+.container {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 1.2rem 4rem;
+}
+
+/* ===== INPUT SECTION ===== */
+.altar {
+  background: var(--bg-card);
+  border: 1px solid rgba(212,165,116,0.15);
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+.altar::before {
+  content: '';
+  position: absolute; top: -1px; left: 20%; right: 20%; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+.altar::after {
+  content: '';
+  position: absolute; bottom: -1px; left: 20%; right: 20%; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--jade), transparent);
+}
+
+.altar__label {
+  font-family: var(--font-accent);
+  font-size: 1.1rem;
+  color: var(--gold);
+  text-align: center;
+  margin-bottom: 0.3rem;
+}
+.altar__hint {
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  margin-bottom: 1.4rem;
+}
+
+.altar__inputs {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 1.6rem;
+}
+.altar__input {
+  width: 90px;
+  padding: 0.7rem 0;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  color: var(--gold-bright);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(212,165,116,0.2);
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.altar__input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 20px var(--gold-glow), inset 0 0 12px rgba(212,165,116,0.06);
+}
+.altar__input::placeholder {
+  color: rgba(212,165,116,0.25);
+  font-size: 1rem;
+}
+
+.altar__btn {
+  display: block;
+  margin: 0 auto;
+  padding: 0.8rem 3rem;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  letter-spacing: 0.2em;
+  color: var(--bg-deep);
+  background: linear-gradient(135deg, var(--gold), var(--gold-bright));
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.25s, box-shadow 0.3s;
+}
+.altar__btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 35px var(--gold-glow);
+}
+.altar__btn:active { transform: scale(0.97); }
+.altar__btn::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.25) 50%, transparent 60%);
+  transform: translateX(-100%);
+  transition: transform 0.6s;
+}
+.altar__btn:hover::after { transform: translateX(100%); }
+
+/* ===== RESULT SECTION ===== */
+.result { margin-top: 2rem; }
+
+.result__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.gua-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(212,165,116,0.12);
+  border-radius: 14px;
+  padding: 1.4rem 1rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(30px);
+  animation: card-in 0.6s ease-out forwards;
+  backdrop-filter: blur(8px);
+}
+.gua-card--full { grid-column: 1 / -1; }
+.gua-card:nth-child(1) { animation-delay: 0.1s; }
+.gua-card:nth-child(2) { animation-delay: 0.25s; }
+
+@keyframes card-in {
+  to { opacity:1; transform: translateY(0); }
+}
+
+.gua-card__tag {
+  font-family: var(--font-accent);
+  font-size: 0.75rem;
+  color: var(--jade);
+  letter-spacing: 0.15em;
+  margin-bottom: 0.6rem;
+  text-transform: uppercase;
+}
+
+.gua-card__name {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  color: var(--gold-bright);
+  text-shadow: 0 0 12px var(--gold-glow);
+  margin-bottom: 0.8rem;
+}
+
+/* Hexagram lines */
+.hex-lines {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 0.6rem 0;
+}
+.hex-line {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  height: 6px;
+  width: 72px;
+  position: relative;
+}
+.hex-line--yang {
+  background: var(--gold);
+  border-radius: 3px;
+  box-shadow: 0 0 8px var(--gold-glow);
+}
+.hex-line--yin {
+  background: transparent;
+}
+.hex-line--yin::before,
+.hex-line--yin::after {
+  content: '';
+  width: 28px; height: 6px;
+  background: var(--jade);
+  border-radius: 3px;
+  box-shadow: 0 0 8px var(--jade-glow);
+  position: absolute; top: 0;
+}
+.hex-line--yin::before { left: 0; }
+.hex-line--yin::after { right: 0; }
+
+.hex-line--change {
+  animation: line-pulse 1.5s ease-in-out infinite;
+}
+@keyframes line-pulse {
+  0%,100% { filter: brightness(1); }
+  50% { filter: brightness(1.6); }
+}
+
+/* Info card */
+.info-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(212,165,116,0.1);
+  border-radius: 14px;
+  padding: 1.3rem 1.2rem;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: card-in 0.5s ease-out forwards;
+  backdrop-filter: blur(8px);
+}
+.info-card--delay1 { animation-delay: 0.4s; }
+.info-card--delay2 { animation-delay: 0.55s; }
+.info-card--delay3 { animation-delay: 0.7s; }
+
+.info-card__title {
+  font-family: var(--font-accent);
+  font-size: 0.8rem;
+  color: var(--jade);
+  letter-spacing: 0.12em;
+  margin-bottom: 0.5rem;
+}
+.info-card__body {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--text);
+}
+.info-card__body strong {
+  color: var(--gold-bright);
+  font-weight: 700;
+}
+
+.fortune-badge {
+  display: inline-block;
+  padding: 0.3rem 1.2rem;
+  border-radius: 20px;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  margin-top: 0.5rem;
+}
+.fortune-badge--ji {
+  background: rgba(58,191,173,0.15);
+  border: 1px solid var(--jade);
+  color: var(--jade);
+}
+.fortune-badge--xiong {
+  background: rgba(192,57,43,0.15);
+  border: 1px solid var(--crimson);
+  color: var(--crimson);
+}
+.fortune-badge--ping {
+  background: rgba(212,165,116,0.12);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+}
+
+/* Divider */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212,165,116,0.2), transparent);
+  margin: 0.8rem 0;
+}
+
+/* ===== FOOTER ===== */
+.footer {
+  text-align: center;
+  padding: 2rem 1rem;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  line-height: 1.8;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 480px) {
+  .altar__inputs { flex-wrap: wrap; }
+  .altar__input { width: 80px; }
+  .result__row { grid-template-columns: 1fr; }
+  .gua-card__name { font-size: 1.5rem; }
+}
+
+/* Loading shimmer */
+.loading-ring {
+  width: 50px; height: 50px;
+  margin: 2rem auto;
+  border: 2px solid rgba(212,165,116,0.15);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: ring-spin 0.8s linear infinite;
+}
+@keyframes ring-spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<canvas id="bg-canvas"></canvas>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+/* ========== DATA ========== */
+const TRIGRAMS = [
+  null,
+  { name:'乾', symbol:'☰', lines:[1,1,1], element:'金', nature:'天' },
+  { name:'兑', symbol:'☱', lines:[1,1,0], element:'金', nature:'泽' },
+  { name:'离', symbol:'☲', lines:[1,0,1], element:'火', nature:'火' },
+  { name:'震', symbol:'☳', lines:[0,0,1], element:'木', nature:'雷' },
+  { name:'巽', symbol:'☴', lines:[0,1,1], element:'木', nature:'风' },
+  { name:'坎', symbol:'☵', lines:[0,1,0], element:'水', nature:'水' },
+  { name:'艮', symbol:'☶', lines:[1,0,0], element:'土', nature:'山' },
+  { name:'坤', symbol:'☷', lines:[0,0,0], element:'土', nature:'地' },
+];
+
+// 64 hexagram names: index by [upper][lower]
+const HEX_NAMES = {
+  '11':'乾为天','12':'天泽履','13':'天火同人','14':'天雷无妄',
+  '15':'天风姤','16':'天水讼','17':'天山遁','18':'天地否',
+  '21':'泽天夬','22':'兑为泽','23':'泽火革','24':'泽雷随',
+  '25':'泽风大过','26':'泽水困','27':'泽山咸','28':'泽地萃',
+  '31':'火天大有','32':'火泽睽','33':'离为火','34':'火雷噬嗑',
+  '35':'火风鼎','36':'火水未济','37':'火山旅','38':'火地晋',
+  '41':'雷天大壮','42':'雷泽归妹','43':'雷火丰','44':'震为雷',
+  '45':'雷风恒','46':'雷水解','47':'雷山小过','48':'雷地豫',
+  '51':'风天小畜','52':'风泽中孚','53':'风火家人','54':'风雷益',
+  '55':'巽为风','56':'风水涣','57':'风山渐','58':'风地观',
+  '61':'水天需','62':'水泽节','63':'水火既济','64':'水雷屯',
+  '65':'水风井','66':'坎为水','67':'水山蹇','68':'水地比',
+  '71':'山天大畜','72':'山泽损','73':'山火贲','74':'山雷颐',
+  '75':'山风蛊','76':'山水蒙','77':'艮为山','78':'山地剥',
+  '81':'地天泰','82':'地泽临','83':'地火明夷','84':'地雷复',
+  '85':'地风升','86':'地水师','87':'地山谦','88':'坤为地',
+};
+
+const ELEMENT_ORDER = ['金','水','木','火','土'];
+// 生: 金生水, 水生木, 木生火, 火生土, 土生金
+// 克: 金克木, 木克土, 土克水, 水克火, 火克金
+function getRelation(tiElement, yongElement) {
+  if (tiElement === yongElement) return { relation:'比和', fortune:'平', desc:'体用比和，事可成' };
+  const gen = { '金':'水','水':'木','木':'火','火':'土','土':'金' };
+  const ke  = { '金':'木','木':'土','土':'水','水':'火','火':'金' };
+  if (gen[tiElement] === yongElement) return { relation:'体生用', fortune:'凶', desc:'体生用，耗泄精力，不利' };
+  if (gen[yongElement] === tiElement) return { relation:'用生体', fortune:'吉', desc:'用生体，得助益，大吉' };
+  if (ke[tiElement] === yongElement)  return { relation:'体克用', fortune:'小吉', desc:'体克用，可得财，小吉' };
+  if (ke[yongElement] === tiElement)  return { relation:'用克体', fortune:'凶', desc:'用克体，受制约，不利' };
+  return { relation:'未知', fortune:'平', desc:'' };
+}
+
+/* ========== DIVINATION LOGIC ========== */
+function modWrap(n, m) { const r = n % m; return r === 0 ? m : r; }
+
+function divine(nums) {
+  let upper, lower, changeLine;
+  if (nums.length === 1) {
+    const s = String(nums[0]);
+    const mid = Math.ceil(s.length / 2);
+    const a = parseInt(s.slice(0, mid), 10) || 1;
+    const b = parseInt(s.slice(mid), 10) || 1;
+    upper = modWrap(a, 8);
+    lower = modWrap(b, 8);
+    changeLine = modWrap(a + b, 6);
+  } else if (nums.length === 2) {
+    upper = modWrap(nums[0], 8);
+    lower = modWrap(nums[1], 8);
+    changeLine = modWrap(nums[0] + nums[1], 6);
+  } else {
+    upper = modWrap(nums[0], 8);
+    lower = modWrap(nums[1], 8);
+    changeLine = modWrap(nums[2], 6);
+  }
+
+  const upperTri = TRIGRAMS[upper];
+  const lowerTri = TRIGRAMS[lower];
+
+  // 本卦 lines: bottom(1) to top(6). lower tri = lines 1-3, upper tri = lines 4-6
+  const benLines = [...lowerTri.lines, ...upperTri.lines]; // index 0=line1(bottom)
+
+  // 变卦: flip changeLine (1-indexed)
+  const bianLines = [...benLines];
+  bianLines[changeLine - 1] = bianLines[changeLine - 1] === 1 ? 0 : 1;
+
+  // Figure out changed trigrams
+  const bianLower = bianLines.slice(0, 3);
+  const bianUpper = bianLines.slice(3, 6);
+  const findTriIdx = (ls) => TRIGRAMS.findIndex((t,i) => i > 0 && t.lines[0]===ls[0] && t.lines[1]===ls[1] && t.lines[2]===ls[2]);
+  const bianUpperIdx = findTriIdx(bianUpper);
+  const bianLowerIdx = findTriIdx(bianLower);
+
+  // 互卦: lines 2,3,4 → lower; lines 3,4,5 → upper (1-indexed)
+  const huLower = benLines.slice(1, 4);
+  const huUpper = benLines.slice(2, 5);
+  const huUpperIdx = findTriIdx(huUpper);
+  const huLowerIdx = findTriIdx(huLower);
+
+  // 体用: changeLine 1-3 → in lower trigram → lower=用, upper=体
+  //        changeLine 4-6 → in upper trigram → upper=用, lower=体
+  let ti, yong;
+  if (changeLine <= 3) {
+    ti = upperTri; yong = lowerTri;
+  } else {
+    ti = lowerTri; yong = upperTri;
+  }
+
+  const benName = HEX_NAMES[`${upper}${lower}`] || `${upperTri.name}${lowerTri.name}卦`;
+  const bianName = HEX_NAMES[`${bianUpperIdx}${bianLowerIdx}`] || '未知卦';
+  const huName = HEX_NAMES[`${huUpperIdx}${huLowerIdx}`] || '未知卦';
+
+  const rel = getRelation(ti.element, yong.element);
+
+  return {
+    upper, lower, changeLine,
+    benLines, benName,
+    bianLines, bianName,
+    huName,
+    ti, yong,
+    rel,
+    upperTri, lowerTri,
+  };
+}
+
+/* ========== COMPONENTS ========== */
+
+function TaijiSVG() {
+  return (
+    <svg className="header__taiji" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="48" fill="none" stroke="url(#tg)" strokeWidth="2"/>
+      <path d="M50 2 A48 48 0 0 1 50 98 A24 24 0 0 1 50 50 A24 24 0 0 0 50 2" fill="#d4a574"/>
+      <path d="M50 98 A48 48 0 0 1 50 2 A24 24 0 0 1 50 50 A24 24 0 0 0 50 98" fill="#3abfad"/>
+      <circle cx="50" cy="26" r="6" fill="#3abfad"/>
+      <circle cx="50" cy="74" r="6" fill="#d4a574"/>
+      <defs>
+        <linearGradient id="tg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#d4a574"/>
+          <stop offset="100%" stopColor="#3abfad"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
+function HexagramDisplay({ lines, changeLine, label }) {
+  // lines: array of 6, index 0 = bottom line (line 1)
+  // We render top to bottom, so reverse
+  const reversed = [...lines].reverse();
+  const changeIdx = lines.length - changeLine; // index in reversed array
+  return (
+    <div className="hex-lines">
+      {reversed.map((l, i) => {
+        const isChange = i === changeIdx;
+        const cls = l === 1
+          ? `hex-line hex-line--yang${isChange ? ' hex-line--change' : ''}`
+          : `hex-line hex-line--yin${isChange ? ' hex-line--change' : ''}`;
+        return <div key={i} className={cls}></div>;
+      })}
+    </div>
+  );
+}
+
+function GuaCard({ tag, name, lines, changeLine, delay }) {
+  return (
+    <div className="gua-card" style={{ animationDelay: `${delay}s` }}>
+      <div className="gua-card__tag">{tag}</div>
+      <div className="gua-card__name">{name}</div>
+      <HexagramDisplay lines={lines} changeLine={changeLine} />
+    </div>
+  );
+}
+
+function ResultSection({ result }) {
+  const { benLines, benName, bianLines, bianName, huName, changeLine, ti, yong, rel, upperTri, lowerTri } = result;
+  const fortuneClass = rel.fortune === '吉' || rel.fortune === '小吉' ? 'fortune-badge--ji'
+    : rel.fortune === '凶' ? 'fortune-badge--xiong' : 'fortune-badge--ping';
+
+  return (
+    <div className="result">
+      <div className="result__row">
+        <GuaCard tag="本 卦" name={benName} lines={benLines} changeLine={changeLine} delay={0.1} />
+        <GuaCard tag="变 卦" name={bianName} lines={bianLines} changeLine={0} delay={0.25} />
+      </div>
+
+      <div className="info-card info-card--delay1" style={{ marginBottom: 14 }}>
+        <div className="info-card__title">互 卦</div>
+        <div className="info-card__body"><strong>{huName}</strong></div>
+      </div>
+
+      <div className="info-card info-card--delay2" style={{ marginBottom: 14 }}>
+        <div className="info-card__title">体用分析</div>
+        <div className="info-card__body">
+          <strong>体卦</strong>：{ti.name}（{ti.symbol}）— {ti.element}
+          <strong>用卦</strong>：{yong.name}（{yong.symbol}）— {yong.element}
+          <div className="divider"></div>
+          动爻在第 <strong>{changeLine}</strong> 爻（{changeLine <= 3 ? '下卦' : '上卦'}）
+          <br/>五行关系：<strong>{rel.relation}</strong>
+        </div>
+      </div>
+
+      <div className="info-card info-card--delay3">
+        <div className="info-card__title">吉凶断语</div>
+        <div className="info-card__body">
+          {rel.desc}
+          <br/>
+          <span className={`fortune-badge ${fortuneClass}`}>{rel.fortune}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ========== APP ========== */
+function App() {
+  const [n1, setN1] = useState('');
+  const [n2, setN2] = useState('');
+  const [n3, setN3] = useState('');
+  const [result, setResult] = useState(null);
+  const [key, setKey] = useState(0);
+
+  const handleDivine = () => {
+    const nums = [n1, n2, n3].map(Number).filter(v => v > 0 && Number.isInteger(v));
+    if (nums.length === 0) return;
+    setResult(divine(nums));
+    setKey(k => k + 1);
+  };
+
+  const onKeyDown = (e) => { if (e.key === 'Enter') handleDivine(); };
+
+  return (
+    <React.Fragment>
+      <header className="header">
+        <TaijiSVG />
+        <h1 className="header__title">梅花易数</h1>
+        <p className="header__sub">数 字 起 卦</p>
+      </header>
+      <main className="container">
+        <section className="altar">
+          <div className="altar__label">请输入数字</div>
+          <div className="altar__hint">输入一至三个正整数，心中默念所问之事</div>
+          <div className="altar__inputs">
+            <input className="altar__input" type="number" min="1" placeholder="数一"
+              value={n1} onChange={e=>setN1(e.target.value)} onKeyDown={onKeyDown}/>
+            <input className="altar__input" type="number" min="1" placeholder="数二"
+              value={n2} onChange={e=>setN2(e.target.value)} onKeyDown={onKeyDown}/>
+            <input className="altar__input" type="number" min="1" placeholder="数三"
+              value={n3} onChange={e=>setN3(e.target.value)} onKeyDown={onKeyDown}/>
+          </div>
+          <button className="altar__btn" onClick={handleDivine}>起 卦</button>
+        </section>
+        {result && <ResultSection key={key} result={result} />}
+      </main>
+      <footer className="footer">
+        梅花易数，宋代邵雍所创，以数起卦，万物皆数。<br/>
+        凡所见所闻，皆可化数成卦，以测吉凶祸福。
+      </footer>
+    </React.Fragment>
+  );
+}
+
+/* ========== BG PARTICLES ========== */
+(function initCanvas() {
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  for (let i = 0; i < 80; i++) {
+    particles.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.random() * 1.5 + 0.3,
+      dx: (Math.random() - 0.5) * 0.15,
+      dy: -Math.random() * 0.2 - 0.05,
+      o: Math.random() * 0.5 + 0.15,
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    for (const p of particles) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(212,165,116,${p.o})`;
+      ctx.fill();
+      p.x += p.dx;
+      p.y += p.dy;
+      if (p.y < -5) { p.y = H + 5; p.x = Math.random() * W; }
+      if (p.x < -5) p.x = W + 5;
+      if (p.x > W + 5) p.x = -5;
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ========== MOUNT ========== */
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
