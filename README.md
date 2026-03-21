@@ -79,13 +79,13 @@ A web-based divination tool based on the Song Dynasty classic *"Plum Blossom Yi 
 
 直接访问 GitHub Pages：
 
-**👉 https://你的用户名.github.io/meihua-yishu/**
+**👉 https://nirvana113.github.io/meihua-yishu/**
 
 ### 本地运行 | Run Locally
 
 ```bash
 # 克隆仓库
-git clone https://github.com/你的用户名/meihua-yishu.git
+git clone https://github.com/Nirvana113/meihua-yishu.git
 
 # 用浏览器打开
 open index.html
