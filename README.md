@@ -5,7 +5,7 @@
 **以数起卦，洞察天机 | Divine with Numbers, Reveal the Hidden**
 
 <img src="https://img.shields.io/badge/版本-1.0-gold?style=flat-square" alt="version">
-<img src="https://img.shields.io/badge/语言-中文-red?style=flat-square" alt="language">
+<img src="https://img.shields.io/badge/语言-中文/EN-red?style=flat-square" alt="language">
 <img src="https://img.shields.io/badge/框架-React_18-61DAFB?style=flat-square&logo=react" alt="react">
 <img src="https://img.shields.io/badge/部署-GitHub_Pages-222?style=flat-square&logo=github" alt="deploy">
 
@@ -14,6 +14,14 @@
 一款基于宋代邵雍「梅花易数」的在线占卜工具，输入数字即可起卦，获得卦象与吉凶分析。
 
 A web-based divination tool based on the Song Dynasty classic *"Plum Blossom Yi Shu"* by Shao Yong. Input numbers to cast hexagrams and receive fortune analysis.
+
+<br>
+
+<img src="./screenshot.png" alt="梅花易数 App Screenshot" width="600">
+
+<br>
+
+**[▶ 在线体验 Live Demo](https://nirvana113.github.io/meihua-yishu/)**
 
 </div>
 
