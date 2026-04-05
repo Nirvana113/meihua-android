@@ -1,0 +1,2207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
+<meta name="msapplication-tap-highlight" content="no">
+<title>梅花易数 · 数字起卦</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700;900&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+/* Safe area insets for notch/Dynamic Island/home indicator */
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+:root {
+  --bg-deep: #06060f;
+  --bg-card: rgba(12,12,30,0.85);
+  --gold: #d4a574;
+  --gold-bright: #f0c87a;
+  --gold-glow: rgba(212,165,116,0.4);
+  --jade: #3abfad;
+  --jade-glow: rgba(58,191,173,0.35);
+  --crimson: #c0392b;
+  --text: #e8dcc8;
+  --text-dim: #8a8072;
+  --font-display: 'Ma Shan Zheng', cursive;
+  --font-body: 'Noto Serif SC', 'Songti SC', serif;
+  --font-accent: 'ZCOOL XiaoWei', serif;
+}
+
+html { font-size: 16px; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg-deep);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+#bg-canvas {
+  position: fixed; top:0; left:0; width:100%; height:100%;
+  z-index: 0; pointer-events: none;
+}
+
+#root { position: relative; z-index: 1; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
+
+/* ===== HEADER ===== */
+.header {
+  text-align: center;
+  padding: 3rem 1rem 2rem;
+  position: relative;
+}
+.header__taiji {
+  width: 70px; height: 70px;
+  margin: 0 auto 1rem;
+  animation: taiji-spin 20s linear infinite;
+  filter: drop-shadow(0 0 18px var(--gold-glow));
+}
+@keyframes taiji-spin { to { transform: rotate(360deg); } }
+
+.header__title {
+  font-family: var(--font-display);
+  font-size: clamp(2.8rem, 8vw, 4.5rem);
+  color: var(--gold-bright);
+  letter-spacing: 0.15em;
+  text-shadow: 0 0 30px var(--gold-glow), 0 2px 4px rgba(0,0,0,0.6);
+  line-height: 1.2;
+}
+.header__sub {
+  font-family: var(--font-accent);
+  font-size: 1rem;
+  color: var(--text-dim);
+  margin-top: 0.4rem;
+  letter-spacing: 0.3em;
+}
+
+/* ===== MAIN CONTAINER ===== */
+.container {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 1.2rem 4rem;
+}
+
+/* ===== INPUT SECTION ===== */
+.altar {
+  background: var(--bg-card);
+  border: 1px solid rgba(212,165,116,0.15);
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+.altar::before {
+  content: '';
+  position: absolute; top: -1px; left: 20%; right: 20%; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+.altar::after {
+  content: '';
+  position: absolute; bottom: -1px; left: 20%; right: 20%; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--jade), transparent);
+}
+
+.altar__label {
+  font-family: var(--font-accent);
+  font-size: 1.1rem;
+  color: var(--gold);
+  text-align: center;
+  margin-bottom: 0.3rem;
+}
+.altar__hint {
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  margin-bottom: 1.4rem;
+}
+
+.altar__inputs {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 1.6rem;
+}
+.altar__input {
+  width: 90px;
+  padding: 0.7rem 0;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  color: var(--gold-bright);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(212,165,116,0.2);
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.altar__input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 20px var(--gold-glow), inset 0 0 12px rgba(212,165,116,0.06);
+}
+.altar__input::placeholder {
+  color: rgba(212,165,116,0.25);
+  font-size: 1rem;
+}
+
+.altar__btn {
+  display: block;
+  margin: 0 auto;
+  padding: 0.8rem 3rem;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  letter-spacing: 0.2em;
+  color: var(--bg-deep);
+  background: linear-gradient(135deg, var(--gold), var(--gold-bright));
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.25s, box-shadow 0.3s;
+}
+.altar__btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 35px var(--gold-glow);
+}
+.altar__btn:active { transform: scale(0.97); }
+.altar__btn::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.25) 50%, transparent 60%);
+  transform: translateX(-100%);
+  transition: transform 0.6s;
+}
+.altar__btn:hover::after { transform: translateX(100%); }
+
+/* ===== RESULT SECTION ===== */
+.result { margin-top: 2rem; }
+
+.result__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.gua-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(212,165,116,0.12);
+  border-radius: 14px;
+  padding: 1.4rem 1rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(30px);
+  animation: card-in 0.6s ease-out forwards;
+  backdrop-filter: blur(8px);
+}
+.gua-card--full { grid-column: 1 / -1; }
+.gua-card:nth-child(1) { animation-delay: 0.1s; }
+.gua-card:nth-child(2) { animation-delay: 0.25s; }
+
+@keyframes card-in {
+  to { opacity:1; transform: translateY(0); }
+}
+
+.gua-card__tag {
+  font-family: var(--font-accent);
+  font-size: 0.75rem;
+  color: var(--jade);
+  letter-spacing: 0.15em;
+  margin-bottom: 0.6rem;
+  text-transform: uppercase;
+}
+
+.gua-card__name {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  color: var(--gold-bright);
+  text-shadow: 0 0 12px var(--gold-glow);
+  margin-bottom: 0.8rem;
+}
+
+/* Hexagram lines */
+.hex-lines {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 0.6rem 0;
+}
+.hex-line {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  height: 6px;
+  width: 72px;
+  position: relative;
+}
+.hex-line--yang {
+  background: var(--gold);
+  border-radius: 3px;
+  box-shadow: 0 0 8px var(--gold-glow);
+}
+.hex-line--yin {
+  background: transparent;
+}
+.hex-line--yin::before,
+.hex-line--yin::after {
+  content: '';
+  width: 28px; height: 6px;
+  background: var(--jade);
+  border-radius: 3px;
+  box-shadow: 0 0 8px var(--jade-glow);
+  position: absolute; top: 0;
+}
+.hex-line--yin::before { left: 0; }
+.hex-line--yin::after { right: 0; }
+
+.hex-line--change {
+  animation: line-pulse 1.5s ease-in-out infinite;
+}
+@keyframes line-pulse {
+  0%,100% { filter: brightness(1); }
+  50% { filter: brightness(1.6); }
+}
+
+/* Info card */
+.info-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(212,165,116,0.1);
+  border-radius: 14px;
+  padding: 1.3rem 1.2rem;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: card-in 0.5s ease-out forwards;
+  backdrop-filter: blur(8px);
+}
+.info-card--delay1 { animation-delay: 0.4s; }
+.info-card--delay2 { animation-delay: 0.55s; }
+.info-card--delay3 { animation-delay: 0.7s; }
+
+.info-card__title {
+  font-family: var(--font-accent);
+  font-size: 0.8rem;
+  color: var(--jade);
+  letter-spacing: 0.12em;
+  margin-bottom: 0.5rem;
+}
+.info-card__body {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--text);
+}
+.info-card__body strong {
+  color: var(--gold-bright);
+  font-weight: 700;
+}
+
+.fortune-badge {
+  display: inline-block;
+  padding: 0.3rem 1.2rem;
+  border-radius: 20px;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  margin-top: 0.5rem;
+}
+.fortune-badge--ji {
+  background: rgba(58,191,173,0.15);
+  border: 1px solid var(--jade);
+  color: var(--jade);
+}
+.fortune-badge--xiong {
+  background: rgba(192,57,43,0.15);
+  border: 1px solid var(--crimson);
+  color: var(--crimson);
+}
+.fortune-badge--ping {
+  background: rgba(212,165,116,0.12);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+}
+
+/* Divider */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212,165,116,0.2), transparent);
+  margin: 0.8rem 0;
+}
+
+/* ===== FOOTER ===== */
+.footer {
+  text-align: center;
+  padding: 2rem 1rem;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  line-height: 1.8;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 480px) {
+  .altar__inputs { flex-wrap: wrap; }
+  .altar__input { width: 80px; }
+  .result__row { grid-template-columns: 1fr; }
+  .gua-card__name { font-size: 1.5rem; }
+}
+
+/* ===== LANG TOGGLE ===== */
+.lang-toggle {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 0.4rem);
+  right: 0.8rem;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+.lang-toggle__btn {
+  padding: 0.4rem 0.6rem;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background: transparent;
+  color: rgba(255,255,255,0.35);
+  transition: all 0.3s;
+  white-space: nowrap;
+  min-width: 40px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.5px;
+}
+.lang-toggle__btn--active {
+  background: transparent;
+  color: var(--gold);
+  font-weight: 600;
+}
+
+/* Loading shimmer */
+.loading-ring {
+  width: 50px; height: 50px;
+  margin: 2rem auto;
+  border: 2px solid rgba(212,165,116,0.15);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: ring-spin 0.8s linear infinite;
+}
+@keyframes ring-spin { to { transform: rotate(360deg); } }
+
+/* ===== MODE TABS ===== */
+.mode-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-bottom: 1.6rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(212,165,116,0.15);
+  border-radius: 12px;
+  padding: 4px;
+  position: relative;
+}
+.mode-tab {
+  padding: 0.5rem 0.6rem;
+  font-family: var(--font-accent);
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  border: none;
+  border-radius: 9px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-dim);
+  transition: all 0.35s ease;
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
+  text-align: center;
+}
+.mode-tab--active {
+  background: linear-gradient(135deg, rgba(212,165,116,0.18), rgba(58,191,173,0.12));
+  color: var(--gold-bright);
+  box-shadow: 0 0 16px rgba(212,165,116,0.15);
+  border: 1px solid rgba(212,165,116,0.25);
+}
+.mode-tab:not(.mode-tab--active):hover {
+  color: var(--text);
+  background: rgba(255,255,255,0.03);
+}
+
+/* ===== TIME MODE ===== */
+.time-info {
+  text-align: center;
+  margin-bottom: 1.6rem;
+}
+.time-info__solar {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  margin-bottom: 0.4rem;
+}
+.time-info__lunar {
+  font-family: var(--font-accent);
+  font-size: 1.15rem;
+  color: var(--gold);
+  margin-bottom: 0.4rem;
+}
+.time-info__ganzhi {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--jade);
+  margin-bottom: 0.3rem;
+  text-shadow: 0 0 10px var(--jade-glow);
+}
+.time-info__shichen {
+  font-family: var(--font-accent);
+  font-size: 1rem;
+  color: var(--gold-bright);
+  margin-bottom: 0.2rem;
+}
+.time-info__clock {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+/* ===== COMPASS (Direction Mode) ===== */
+.compass-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.4rem;
+}
+.compass {
+  position: relative;
+  width: 280px;
+  height: 280px;
+  margin: 0.5rem auto 1rem;
+}
+.compass__center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(212,165,116,0.15), transparent);
+  border: 1px solid rgba(212,165,116,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  color: var(--gold);
+  z-index: 2;
+  pointer-events: none;
+}
+.compass__segment {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 100px; height: 100px;
+  margin-left: -50px;
+  margin-top: -50px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 8px;
+  transition: all 0.3s ease;
+  clip-path: polygon(50% 50%, 20% 0%, 80% 0%);
+  background: rgba(212,165,116,0.06);
+  border: none;
+  color: var(--text);
+}
+.compass__segment:hover {
+  background: rgba(212,165,116,0.15);
+  filter: drop-shadow(0 0 8px var(--gold-glow));
+}
+.compass__segment--selected {
+  background: rgba(212,165,116,0.22) !important;
+  filter: drop-shadow(0 0 14px var(--gold-glow));
+}
+/* Position each segment with rotation. Origin at center of compass. */
+.compass__seg-0 { transform: rotate(0deg) translateY(-40px); }
+.compass__seg-1 { transform: rotate(45deg) translateY(-40px); }
+.compass__seg-2 { transform: rotate(90deg) translateY(-40px); }
+.compass__seg-3 { transform: rotate(135deg) translateY(-40px); }
+.compass__seg-4 { transform: rotate(180deg) translateY(-40px); }
+.compass__seg-5 { transform: rotate(225deg) translateY(-40px); }
+.compass__seg-6 { transform: rotate(270deg) translateY(-40px); }
+.compass__seg-7 { transform: rotate(315deg) translateY(-40px); }
+
+/* Use a nicer octagonal button approach */
+.compass-oct {
+  position: relative;
+  width: 280px;
+  height: 280px;
+  margin: 0.6rem auto 1rem;
+}
+.compass-oct__btn {
+  position: absolute;
+  width: 76px;
+  height: 76px;
+  background: rgba(212,165,116,0.07);
+  border: 1px solid rgba(212,165,116,0.18);
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  transition: all 0.3s ease;
+  color: var(--text);
+  padding: 4px;
+}
+.compass-oct__btn:hover {
+  background: rgba(212,165,116,0.16);
+  box-shadow: 0 0 16px var(--gold-glow);
+  border-color: var(--gold);
+}
+.compass-oct__btn--selected {
+  background: linear-gradient(135deg, rgba(212,165,116,0.2), rgba(58,191,173,0.12));
+  border-color: var(--gold);
+  box-shadow: 0 0 20px var(--gold-glow), 0 0 40px rgba(212,165,116,0.15);
+}
+.compass-oct__symbol {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+.compass-oct__dir {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  color: var(--gold-bright);
+  line-height: 1;
+}
+.compass-oct__trigram {
+  font-family: var(--font-accent);
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  line-height: 1;
+}
+/* Positions: 8 buttons in octagonal layout around center */
+.compass-oct__pos-0 { top: 0; left: 50%; transform: translateX(-50%); }          /* S - top */
+.compass-oct__pos-1 { top: 12%; right: 0; }                                        /* SW - top-right */
+.compass-oct__pos-2 { top: 50%; right: 0; transform: translateY(-50%); }           /* W - right */
+.compass-oct__pos-3 { bottom: 12%; right: 0; }                                     /* NW - bottom-right */
+.compass-oct__pos-4 { bottom: 0; left: 50%; transform: translateX(-50%); }         /* N - bottom */
+.compass-oct__pos-5 { bottom: 12%; left: 0; }                                      /* NE - bottom-left */
+.compass-oct__pos-6 { top: 50%; left: 0; transform: translateY(-50%); }            /* E - left */
+.compass-oct__pos-7 { top: 12%; left: 0; }                                         /* SE - top-left */
+
+.compass-oct__center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(58,191,173,0.1), transparent);
+  border: 1px solid rgba(58,191,173,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.compass-oct__center-text {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--jade);
+}
+.compass-label {
+  font-family: var(--font-accent);
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  text-align: center;
+  margin-bottom: 0.3rem;
+}
+
+/* ===== SOUND / TAP COUNTER ===== */
+.sound-panel {
+  text-align: center;
+}
+.sound-phase {
+  font-family: var(--font-accent);
+  font-size: 1.1rem;
+  color: var(--gold);
+  margin-bottom: 0.5rem;
+}
+.sound-hint {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  margin-bottom: 1rem;
+}
+.tap-btn-wrap {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+.tap-btn {
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, rgba(212,165,116,0.18), rgba(58,191,173,0.08));
+  border: 2px solid rgba(212,165,116,0.3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s, box-shadow 0.15s;
+  position: relative;
+  overflow: hidden;
+  color: var(--gold-bright);
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+}
+.tap-btn:hover {
+  box-shadow: 0 0 30px var(--gold-glow);
+}
+.tap-btn:active {
+  transform: scale(0.93);
+}
+.tap-ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(212,165,116,0.3);
+  animation: tap-ripple-anim 0.6s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes tap-ripple-anim {
+  0% { width: 0; height: 0; opacity: 0.6; }
+  100% { width: 200px; height: 200px; opacity: 0; margin-left: -100px; margin-top: -100px; }
+}
+.tap-count {
+  font-family: var(--font-display);
+  font-size: 3.5rem;
+  color: var(--gold-bright);
+  text-shadow: 0 0 20px var(--gold-glow);
+  margin: 0.5rem 0;
+  line-height: 1;
+}
+.tap-count-label {
+  font-family: var(--font-accent);
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-bottom: 1rem;
+}
+.sound-btns {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 1rem;
+}
+.sound-btn {
+  padding: 0.5rem 1.5rem;
+  font-family: var(--font-accent);
+  font-size: 0.9rem;
+  border: 1px solid rgba(212,165,116,0.3);
+  border-radius: 8px;
+  background: rgba(212,165,116,0.08);
+  color: var(--gold);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.sound-btn:hover {
+  background: rgba(212,165,116,0.18);
+  box-shadow: 0 0 12px var(--gold-glow);
+}
+.sound-btn--reset {
+  border-color: rgba(192,57,43,0.3);
+  color: var(--crimson);
+  background: rgba(192,57,43,0.08);
+}
+.sound-btn--reset:hover {
+  background: rgba(192,57,43,0.18);
+}
+.sound-summary {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin: 1rem 0;
+}
+.sound-summary__item {
+  text-align: center;
+}
+.sound-summary__label {
+  font-family: var(--font-accent);
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-bottom: 0.2rem;
+}
+.sound-summary__val {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  color: var(--jade);
+}
+
+@media (max-width: 480px) {
+  .compass-oct { width: 240px; height: 240px; }
+  .compass-oct__btn { width: 64px; height: 64px; }
+  .compass-oct__symbol { font-size: 1.1rem; }
+  .compass-oct__dir { font-size: 0.85rem; }
+  .compass-oct__trigram { font-size: 0.65rem; }
+  .tap-btn { width: 100px; height: 100px; }
+}
+
+/* ===== 5-TAB LAYOUT ===== */
+.mode-tabs {
+  grid-template-columns: repeat(3, 1fr);
+}
+.mode-tabs .mode-tab:nth-child(4),
+.mode-tabs .mode-tab:nth-child(5) {
+  /* center the bottom 2 tabs */
+}
+.mode-tabs--five {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+}
+.mode-tabs--five .mode-tab {
+  flex: 0 0 calc(33.33% - 4px);
+  min-width: 0;
+}
+@media (max-width: 480px) {
+  .mode-tabs--five .mode-tab {
+    flex: 0 0 calc(50% - 4px);
+    font-size: 0.78rem;
+  }
+}
+
+/* ===== CHARACTER INPUT ===== */
+.altar__text-input {
+  width: 100%;
+  max-width: 400px;
+  padding: 0.8rem 1rem;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 1.3rem;
+  color: var(--gold-bright);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(212,165,116,0.2);
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  display: block;
+  margin: 0 auto 1rem;
+}
+.altar__text-input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 20px var(--gold-glow), inset 0 0 12px rgba(212,165,116,0.06);
+}
+.altar__text-input::placeholder {
+  color: rgba(212,165,116,0.25);
+  font-size: 1rem;
+}
+
+.stroke-analysis {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 1.2rem;
+}
+.stroke-char {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 10px;
+  background: rgba(212,165,116,0.06);
+  border: 1px solid rgba(212,165,116,0.15);
+  border-radius: 8px;
+  min-width: 50px;
+}
+.stroke-char__char {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--gold-bright);
+}
+.stroke-char__count {
+  font-family: var(--font-accent);
+  font-size: 0.75rem;
+  color: var(--jade);
+  margin-top: 2px;
+}
+.stroke-char--unknown {
+  border-color: rgba(192,57,43,0.4);
+}
+.stroke-char--unknown .stroke-char__count {
+  color: var(--crimson);
+}
+.stroke-override {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 1.2rem;
+}
+.stroke-override__item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+.stroke-override__input {
+  width: 48px;
+  padding: 4px;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--gold-bright);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(192,57,43,0.4);
+  border-radius: 6px;
+  outline: none;
+}
+.stroke-override__input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 10px var(--gold-glow);
+}
+.stroke-warning {
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--crimson);
+  margin-bottom: 0.8rem;
+}
+
+/* ===== HEXAGRAM DETAIL CARD ===== */
+.hex-detail-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(212,165,116,0.12);
+  border-radius: 14px;
+  margin-top: 14px;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: card-in 0.5s ease-out forwards;
+  animation-delay: 0.85s;
+  backdrop-filter: blur(8px);
+}
+.hex-detail-toggle {
+  width: 100%;
+  padding: 1rem 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--gold);
+  font-family: var(--font-accent);
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  transition: background 0.3s;
+}
+.hex-detail-toggle:hover {
+  background: rgba(212,165,116,0.06);
+}
+.hex-detail-toggle__arrow {
+  font-size: 0.75rem;
+  transition: transform 0.3s;
+  color: var(--text-dim);
+}
+.hex-detail-toggle__arrow--open {
+  transform: rotate(180deg);
+}
+.hex-detail-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease, padding 0.3s ease;
+  padding: 0 1.2rem;
+}
+.hex-detail-body--open {
+  max-height: 600px;
+  padding: 0 1.2rem 1.2rem;
+}
+.hex-detail-section {
+  margin-bottom: 0.8rem;
+}
+.hex-detail-label {
+  font-family: var(--font-accent);
+  font-size: 0.78rem;
+  color: var(--jade);
+  letter-spacing: 0.1em;
+  margin-bottom: 0.3rem;
+}
+.hex-detail-text {
+  font-size: 0.92rem;
+  line-height: 1.7;
+  color: var(--text);
+}
+.hex-detail-guaci {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--gold-bright);
+  line-height: 1.8;
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<canvas id="bg-canvas"></canvas>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, createContext, useContext } = React;
+
+/* ========== I18N ========== */
+const I18N = {
+  zh: {
+    title: '梅花易数',
+    subtitle: '数 字 起 卦',
+    inputLabel: '请输入数字',
+    inputHint: '输入一至三个正整数，心中默念所问之事',
+    placeholder: ['数一','数二','数三'],
+    divineBtn: '起 卦',
+    benGua: '本 卦',
+    bianGua: '变 卦',
+    huGua: '互 卦',
+    tiYongTitle: '体用分析',
+    tiGua: '体卦',
+    yongGua: '用卦',
+    changingLine: (n, pos) => `动爻在第 ${n} 爻（${pos}）`,
+    lowerGua: '下卦',
+    upperGua: '上卦',
+    wuxingRelation: '五行关系',
+    fortuneTitle: '吉凶断语',
+    footer: ['梅花易数，宋代邵雍所创，以数起卦，万物皆数。','凡所见所闻，皆可化数成卦，以测吉凶祸福。'],
+    elements: { '金':'金','水':'水','木':'木','火':'火','土':'土' },
+    relations: {
+      '比和': { relation:'比和', fortune:'平', desc:'体用比和，事可成' },
+      '体生用': { relation:'体生用', fortune:'凶', desc:'体生用，耗泄精力，不利' },
+      '用生体': { relation:'用生体', fortune:'吉', desc:'用生体，得助益，大吉' },
+      '体克用': { relation:'体克用', fortune:'小吉', desc:'体克用，可得财，小吉' },
+      '用克体': { relation:'用克体', fortune:'凶', desc:'用克体，受制约，不利' },
+    },
+    fortunes: { '吉':'吉','小吉':'小吉','凶':'凶','平':'平' },
+    tabNumbers: '数字起卦',
+    tabTime: '时间起卦',
+    tabDirection: '方位起卦',
+    tabSound: '声音起卦',
+    tabCharacter: '汉字起卦',
+    subtitleNumber: '数 字 起 卦',
+    subtitleTime: '时 间 起 卦',
+    subtitleDirection: '方 位 起 卦',
+    subtitleSound: '声 音 起 卦',
+    subtitleCharacter: '汉 字 起 卦',
+    subtitleCharacter: '汉 字 起 卦',
+    charInputLabel: '请输入汉字',
+    charInputHint: '输入一个或多个汉字，以笔画数起卦',
+    charPlaceholder: '请输入汉字...',
+    charStrokeLabel: '笔画',
+    charUnknown: '未知',
+    charWarning: '部分汉字笔画未知，请手动输入笔画数',
+    charStrokeAnalysis: '笔画分析',
+    hexDetailTitle: '卦辞详解',
+    hexDetailGuaCi: '卦辞',
+    hexDetailMeaning: '释义',
+    hexDetailAdvice: '指引',
+    hexDetailExpand: '查看卦辞详解',
+    dirSelectLabel: '请选择方位',
+    dirNames: ['南','西南','西','西北','北','东北','东','东南'],
+    dirTrigramNames: ['离','坤','兑','乾','坎','艮','震','巽'],
+    soundPhase1: '第一声',
+    soundPhase2: '第二声',
+    soundTapLabel: '击',
+    soundTapUnit: '次',
+    soundNextBtn: '下一步',
+    soundResetBtn: '重新开始',
+    soundTapHint: '每闻一声，轻点一次',
+    soundTapHint2: '再次聆听，记录第二组声数',
+    lunarLabel: '农历',
+    shichenLabel: '时辰',
+    ganzhiYearLabel: '干支年',
+    solarLabel: '公历',
+    timeNumbers: '起卦数',
+    tianGan: ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'],
+    diZhi: ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'],
+    shengXiao: ['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪'],
+    shichenNames: ['子时','丑时','寅时','卯时','辰时','巳时','午时','未时','申时','酉时','戌时','亥时'],
+    lunarMonths: ['正月','二月','三月','四月','五月','六月','七月','八月','九月','十月','冬月','腊月'],
+    lunarDays: ['初一','初二','初三','初四','初五','初六','初七','初八','初九','初十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十','廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'],
+  },
+  en: {
+    title: 'Plum Blossom Oracle',
+    subtitle: 'N U M B E R   D I V I N A T I O N',
+    inputLabel: 'Enter Numbers',
+    inputHint: 'Input 1 to 3 positive integers while focusing on your question',
+    placeholder: ['1st','2nd','3rd'],
+    divineBtn: 'D I V I N E',
+    benGua: 'Primary',
+    bianGua: 'Changed',
+    huGua: 'Mutual Hexagram',
+    tiYongTitle: 'Ti-Yong Analysis',
+    tiGua: 'Ti (Self)',
+    yongGua: 'Yong (Object)',
+    changingLine: (n, pos) => `Changing line at position ${n} (${pos})`,
+    lowerGua: 'Lower',
+    upperGua: 'Upper',
+    wuxingRelation: 'Five Elements',
+    fortuneTitle: 'Fortune Reading',
+    footer: ['Plum Blossom Numerology, created by Shao Yong in the Song Dynasty.','All things are numbers — numbers reveal the Dao.'],
+    elements: { '金':'Metal','水':'Water','木':'Wood','火':'Fire','土':'Earth' },
+    relations: {
+      '比和': { relation:'Harmony', fortune:'Neutral', desc:'Ti and Yong in harmony — matters can proceed.' },
+      '体生用': { relation:'Ti generates Yong', fortune:'Unfavorable', desc:'Energy drains outward — not advantageous.' },
+      '用生体': { relation:'Yong generates Ti', fortune:'Auspicious', desc:'Receiving external support — greatly auspicious.' },
+      '体克用': { relation:'Ti controls Yong', fortune:'Slightly Auspicious', desc:'In control of the situation — minor gain.' },
+      '用克体': { relation:'Yong controls Ti', fortune:'Unfavorable', desc:'Constrained by external forces — not favorable.' },
+    },
+    fortunes: { '吉':'Auspicious','小吉':'Fair','凶':'Unfavorable','平':'Neutral' },
+    tabNumbers: 'By Numbers',
+    tabTime: 'By Time',
+    tabDirection: 'By Direction',
+    tabSound: 'By Sound',
+    tabCharacter: 'By Characters',
+    subtitleNumber: 'N U M B E R   D I V I N A T I O N',
+    subtitleTime: 'T I M E   D I V I N A T I O N',
+    subtitleDirection: 'D I R E C T I O N   D I V I N A T I O N',
+    subtitleSound: 'S O U N D   D I V I N A T I O N',
+    subtitleCharacter: 'C H A R A C T E R   D I V I N A T I O N',
+    subtitleCharacter: 'C H A R A C T E R   D I V I N A T I O N',
+    charInputLabel: 'Enter Chinese Characters',
+    charInputHint: 'Input one or more Chinese characters to divine by stroke count',
+    charPlaceholder: 'Enter characters...',
+    charStrokeLabel: 'strokes',
+    charUnknown: '?',
+    charWarning: 'Some characters not found. Please enter stroke counts manually.',
+    charStrokeAnalysis: 'Stroke Analysis',
+    hexDetailTitle: 'Hexagram Commentary',
+    hexDetailGuaCi: 'Original Text',
+    hexDetailMeaning: 'Interpretation',
+    hexDetailAdvice: 'Guidance',
+    hexDetailExpand: 'View Hexagram Details',
+    dirSelectLabel: 'Select a Direction',
+    dirNames: ['South','Southwest','West','Northwest','North','Northeast','East','Southeast'],
+    dirTrigramNames: ['Li','Kun','Dui','Qian','Kan','Gen','Zhen','Xun'],
+    soundPhase1: 'First Sound',
+    soundPhase2: 'Second Sound',
+    soundTapLabel: 'Tap',
+    soundTapUnit: 'taps',
+    soundNextBtn: 'Next',
+    soundResetBtn: 'Reset',
+    soundTapHint: 'Tap once for each sound you hear',
+    soundTapHint2: 'Listen again and record the second group',
+    lunarLabel: 'Lunar',
+    shichenLabel: 'Hour',
+    ganzhiYearLabel: 'Year',
+    solarLabel: 'Solar',
+    timeNumbers: 'Divination Numbers',
+    tianGan: ['Jia','Yi','Bing','Ding','Wu','Ji','Geng','Xin','Ren','Gui'],
+    diZhi: ['Zi','Chou','Yin','Mao','Chen','Si','Wu','Wei','Shen','You','Xu','Hai'],
+    shengXiao: ['Rat','Ox','Tiger','Rabbit','Dragon','Snake','Horse','Goat','Monkey','Rooster','Dog','Pig'],
+    shichenNames: ['Zi (23-01)','Chou (01-03)','Yin (03-05)','Mao (05-07)','Chen (07-09)','Si (09-11)','Wu (11-13)','Wei (13-15)','Shen (15-17)','You (17-19)','Xu (19-21)','Hai (21-23)'],
+    lunarMonths: ['1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th','11th','12th'],
+    lunarDays: (function() { const a = []; for (let i=1; i<=30; i++) a.push(String(i)); return a; })(),
+  }
+};
+
+const LangContext = createContext('zh');
+function useLang() { return useContext(LangContext); }
+function t(lang) { return I18N[lang]; }
+
+/* ========== DATA ========== */
+const TRIGRAMS = [
+  null,
+  { name:'乾', symbol:'☰', lines:[1,1,1], element:'金', nature:'天' },
+  { name:'兑', symbol:'☱', lines:[1,1,0], element:'金', nature:'泽' },
+  { name:'离', symbol:'☲', lines:[1,0,1], element:'火', nature:'火' },
+  { name:'震', symbol:'☳', lines:[0,0,1], element:'木', nature:'雷' },
+  { name:'巽', symbol:'☴', lines:[0,1,1], element:'木', nature:'风' },
+  { name:'坎', symbol:'☵', lines:[0,1,0], element:'水', nature:'水' },
+  { name:'艮', symbol:'☶', lines:[1,0,0], element:'土', nature:'山' },
+  { name:'坤', symbol:'☷', lines:[0,0,0], element:'土', nature:'地' },
+];
+
+// 64 hexagram names: index by [upper][lower]
+const HEX_NAMES = {
+  '11':'乾为天','12':'天泽履','13':'天火同人','14':'天雷无妄',
+  '15':'天风姤','16':'天水讼','17':'天山遁','18':'天地否',
+  '21':'泽天夬','22':'兑为泽','23':'泽火革','24':'泽雷随',
+  '25':'泽风大过','26':'泽水困','27':'泽山咸','28':'泽地萃',
+  '31':'火天大有','32':'火泽睽','33':'离为火','34':'火雷噬嗑',
+  '35':'火风鼎','36':'火水未济','37':'火山旅','38':'火地晋',
+  '41':'雷天大壮','42':'雷泽归妹','43':'雷火丰','44':'震为雷',
+  '45':'雷风恒','46':'雷水解','47':'雷山小过','48':'雷地豫',
+  '51':'风天小畜','52':'风泽中孚','53':'风火家人','54':'风雷益',
+  '55':'巽为风','56':'风水涣','57':'风山渐','58':'风地观',
+  '61':'水天需','62':'水泽节','63':'水火既济','64':'水雷屯',
+  '65':'水风井','66':'坎为水','67':'水山蹇','68':'水地比',
+  '71':'山天大畜','72':'山泽损','73':'山火贲','74':'山雷颐',
+  '75':'山风蛊','76':'山水蒙','77':'艮为山','78':'山地剥',
+  '81':'地天泰','82':'地泽临','83':'地火明夷','84':'地雷复',
+  '85':'地风升','86':'地水师','87':'地山谦','88':'坤为地',
+};
+
+const ELEMENT_ORDER = ['金','水','木','火','土'];
+
+/* ========== STROKE DATA ========== */
+const STROKE_DATA = {
+  1: '一乙',
+  2: '二十丁七八人入几了力乃又',
+  3: '三干于亏工土士才下大丈与万上小口山巾千乞川亿个么久勺凡丸及广亡门丫义之尸弓己已巳卫子也女飞刃习叉马乡',
+  4: '丰王开井天夫元无云专扎艺木五支厅不太犬区历尤友匹车巨牙屯比互切瓦止少日中冈贝内水见午牛手毛气升长仁什片仆化仇币仍仅斤爪反介父从今凶分乏公仓月氏勿欠风丹匀乌凤勾文六方火为斗忆订计户认心尺引丑巴孔队办以允予劝双书幻玉刊示末未击打巧正扑扒功扔去甘世古节本术可丙左厉右石布龙平灭轧东卡北占业旧帅归且旦目叶甲申叮电号田由史只央兄叼叫另叨叹四生失禾丘付仗代仙们仪白仔他斥瓜乎丛令用甩印乐句匆册犯外处冬鸟务包饥主半头汁汇兰宁穴它讨写让礼训议必出辽奶奴加召皮边发孕圣对台矛纠母幼丝邦式刑动扛寺吉扣考托老执巩圾扩扫地扬场耳共芒亚芝朽朴机权过臣再协西压厌在有百存而页匠夸夺灰达列死成夹轨邪划迈毕至此贞师尘尖劣光当早吐吓虫曲团同吊吃因吸吗屿帆岁回岂则刚网肉年朱先丢舌竹迁乔伟传乒乓休伍伏优伐延件任伤价份华仰仿伙伪自血向似后行舟全会杀合兆企众爷伞创肌朵杂危旬旨负各名多争色壮冲冰庄庆亦刘齐交次衣产决充妄闭问闯羊并关米灯州汗污江池汤忙兴宇守宅字安讲军许论农讽设访寻那迅尽导异孙阵阳收阶阴防奸如妇好她妈戏羽观欢买红纤级约纪驰巡',
+  5: '玄冬末术必瓦主市立闪兰半汁汇头汉宁穴它讨写让礼训议出辽奶奴加召皮边发孕圣对台矛纠母幼丝邦式刑动扛寺吉扣考托老执巩圾扩扫地扬场耳共芒亚芝朽朴机权过臣再协西压厌在有百存而页匠夸夺灰达列死成夹轨邪划迈毕至此贞师尘尖劣光当早吐吓虫曲团同吊吃因吸吗屿帆岁回岂则刚网肉年朱先丢舌竹迁乔伟传休伍伏优伐延件任伤价份华仰仿伙伪自血向似后行舟全会杀合兆企众爷伞创肌朵杂危旬旨负各名多争色壮冲冰庄庆亦刘齐交次衣产决充妄闭问闯羊并关米灯州汗污江池汤忙兴宇守宅字安讲军许论农讽设访寻那迅尽导异孙阵阳收阶阴防奸如妇好她妈戏羽观欢买红纤级约纪驰巡',
+  6: '邢那芋芍花芥芬苍芳芦芯苇芽芭苏杆杠杏材村杜束杖杞李极杨求更两丽医辰励否还歼来连步坚旱盯呈时吴助县里呆吕园旷围呀吱叮员呐听吩吹呜吧吼别岗帐财针钉告我乱利秃秀私每兵估体何但伸作伯伶佣低你住位伴身皂佛近彻役返余希坐谷妥含邻岔肝肚肠龟免狂犹角删条卵岛迎饭饮系言冻状亩况床库庇疗应这序辛弃冶忘闰闲间闷判灶灿弟汪沙汽沃没沟沈沉怀忧快完宋宏牢灾良证启评补初社识诉诊词译君灵即层尿尾迟局改张忌际陆阿陈阻附妙妖姊妨纲纳驳纵纷纸纹纺驴纽扣托执考吉芒亚芝机权亘吏夺旨负冲冰庄庆交次衣产充妄闭羊米灯池汤忙兴宇守宅字安讲军许论讽设访寻导孙阳收阶阴防如妇好戏羽观买级纪',
+  7: '寿弄麦形进戒吞远违运扶抚坛技坏抛扰拒找批扯址走抄坝贡攻赤折抓扮抢孝均抖护壳志扭块声把报却劫芸芹花芽苗英苑苞范茅直苯杰柜析板松枪构述枕丧或画卧事刺枣雨卖矿码厕奔奇奋态欧殴垄妆努忍劲鸡纬驱纯纱纲纳纵纷纸纺驳纽坠肖尾迟局改张忌际陆阿陈阻附抗拟报抒劳抑拓拂块识钉钓钙钞钝钠钢钦钧钮钩钱钳钻闸间闷判灿弟汪沙汽没沟沈沉怀忧快完宋宏牢灾良评补初社诉诊词译灵即层序辛弃冶忘闰闲更两丽医辰励步坚旱呈吴县里园旷围吱员听吹呜别岗帐财针我乱利秀私兵估体何但伸作伯低住位身佛近役返余希坐谷含邻肝肚肠免狂角删条岛迎饭饮系言冻况库疗应这弃灶汽沃沟沉怀快宏良证启评补初社识诉词译灵即层尿迟局',
+  8: '表规抹拢拔担坦押抽拐拖拍者拆拥抵拘势抱垃拉拦拌幸招坡披拨择抬其取苦若茂苹英范茅昔苟茄茎林枝杯柜析板松枪构述枕丧画卧刺枣雨卖矿码厕奔奇奋态殴妆努忍鸡驱纯纱具典养制券刻命和咏呼鸣咐咒呕固国图垂坤夜实宝审官空穷定宜宙宸射将展屠峡峰圆旁旅热烈爱烧烤烦烟烛读训记讨让诗试诚话谁调谅请许诸课谈说诽语误准浪涉消涂涌涛涝海浮涨润涤涧凌凉冻净拳倍候倚借值倡倾健偏班病症疫疲痒座庭底席恐恕恨恤恰恼悉悟悠您悄悲悔悦害凌净能难殷预堆捕挺捞振损捡换挽到非叔歧齿些卓虎贤尚忠念怖怕怜思怡急性怪昏果杰松枪构杰述丧或事刺枣雨卖矿码厕参金命咏呼鸣居屈往径所房炉炒炕炎牧物乖质欣征彼版贫肩肯肤股肢肥服周昌明易昂典具武虎贤尚忠',
+  9: '政故哉赴趁趋战城持挂指按挎拼挡挑括拿垢拾挠挟挣挤挪某甚革荐巷带草茶荒荔茬药荆茸荣赵恢恒恍恐恕恨恤恰恼选适迫退送逃迹追逆济浑派流浇浊测浸浓津洒洁浙涌洞洗活洽洋洲洪勇冒既盾咸哀品哈哉响哑炮炼烁点炭映昨星泉柔柏柳柱柄柿栏树相查标某栋要耐美类架前首省削尝食盆胃胆背胞胎胜狮独狡狠狸献段毒贵闸侠侣侥侧侨侯俊便俗促俐保信侵修俏皆面临勉南药标栋要耐美鬼神祖祝祥禅科秒秋种重复竿笑笔笼笨符第',
+  10: '耕颁原套逐速造途逝透酝配酒院除陪陵陶陷高害家宴宫容宽宸射将展屠峡峰旁桃核桐株根桩格桥恩息恳恶悉悟悠您悄悲悔悦害宽客室宣祖神祝秘租秧积称秩笑笔笃笼笨笛符第秤梁格桥致柴鬼恩借倒倍候倚借值倡倾健偏班秘租特殊站竖起赶造透速逐逗通酒配院除陪陵陶陷圆峰旅热烈爱烧烤烦烟烛读训记讨让诗试诚话谁调谅请许诸课谈说诽语误准浪涉消涂涌涛涝海浮涨润涤涧凌净拳倍准凌冻净能难殷预堆捕挺捞振损捡换挽病症疫疲痒座庭底席恐悟悠悄悲悔悦害准凌净准拳借倒倍候倚值倡倾健偏班秘租特殊站竖',
+  11: '基培域堆堂堪报场墅埋掘掩掠控推接掀掐排探授教敏救啊啤啦啄唯唤唱商唐啥啃唾售唇眼悬野蛇蛋蛛蛙球理琉琅瑙婆婉婚婶婴猜猪猫猛献描提插揭揽措搂搁搅搜搬搏鼓摆携摄摇萌菌萄菊萍菜萎萝营萧萤菱菲梨梗梢梦梧梭械梯梳检棉棋棚棒棕森棵棱棺椅植椒殖欲歇袋裆被裕规视觉览角解触言订计训议讨记许论讽设访寻导寿弄麦形进戒吞远违运建廷延黄勘动副割寇寅密寂宿袍袖被裕视觉览黄麻鹿庸康廉掌鸟铜铝银铸铲锅锁锄锈锋锐错锡锣锤锥锦键锯',
+  12: '雁厦厨惑遇遍遗道遣渡温测渠湖港游渤渺湿滋谢谣谦谨落葬葱著蒋蒙董葵葫蒂蒸蓄蓉棋棚棒棕森棵棱棺椅植椒殖欲歇款贱贯贰赌赏赐购贸费贺贼贷赖散敞敬朝普景最晴晶智量嗅喊喘喜喉喝喂富寒搭握搜搬搅携摆摇零雷雳需雹雾亮翔曾翠替期脚脖脾腊腋腕脱腰腹鹅跑跌跛距跃跋鲁硕硫确碍程稀稍税稚筋筑策筒筛答等鹉紫辜超越趁趋然煮煎焦煤照煌煞熊街衡御循徨待很径得散敞敬景晴晶智量喊喘喜喉喂富寒窗窝窄短储锻锰锹键锯',
+  13: '禁福碎碗碌碑碰碍磁雷雾零鼓鼠嫁嫌嫉嫡嗓嗜嗦嗤嗡嗲嗽暗暖暮暴置罪署蜀蜂蜒蜓蜕蜗蜡蜜蜥蜻蜿新韵意感愈愉愚愁愤想愣愧愿慈慎慌源溜溪溶滑滚满溢滤漆漂漏演滴漩漫碎碗碌碑碰碍磁鼓楚楷楼概榆榈榜榨模歌管箩箫算箭篇署罪置路跟跨跳踩踏践跪跺蛾踪群殿毁嫁嫌嫉嗓嗜嗡嗽暗暖暮暴照煌煤然煮焦熊鉴筹签简',
+  14: '漠漫漱漂滤漆演滴漩慢慕慧截鼻齐碧磁磅磊磕静靖需嘉嘀嘁嘘嘱嘲墓墙增境墨壁壹夺奖寨歌膀膊膏膝膛膜蔑蔗蔡蔫蔬蔼蔽蓝蓬熟熔熙煽熄熏算管篇筷签简模概榆榈榜榨楼楷楚旗精粮粹粽紧翠聚聊翡肃腐腑腔腕腻腮',
+  15: '播撤撮撬撞撑撒撕撩撼数擅操暴曝横樱橡橘橙橱歇毅潜潘潭潮澄澈澎澜澡澳激濒瀑嬉审影德徽慧慰慷憋憎憔憨懂懈戳摩摧摸摹稻稿穗窟窥箱篮篱簇缘编缎缓缠缤翩膝膨膳臂蝇蝉蝎蝙蝠蝴蝶衔衙褐褒踊踢蹄蹈蹋趟轰辈辉辐辑输遵遮遭醉醋醒镇锻镊镐镑镜镰霄靠鞋鞍额题颜颗餐养馆',
+  16: '薪薯藏薄融螺衡褪壁燃磨擦整憾懒激澡澳濒瀑潮横樱橱歇毅穆糕糖篮篱繁缰翰膳臂蝴蝶螺霜霞霍鞍靠颜额餐馆',
+  17: '藏薄翼覆戴鞠瞧癌瞳瞬矫磷购赚蹦蹬蹭躁辟避邀醒镜镰霜鞠瞧翼覆戴',
+  18: '翻藤瀑曝鹰覆蹲躁辟避邀镜霜翻藤',
+  19: '攀蹲躁辟避邀醒镜霜翼覆藏薄翻',
+  20: '嚼壤耀馨籍',
+  21: '巍露霸',
+  22: '囊',
+  23: '罐',
+};
+
+// Build lookup map
+const _strokeMap = {};
+Object.keys(STROKE_DATA).forEach(n => {
+  const count = parseInt(n);
+  for (const ch of STROKE_DATA[n]) {
+    if (!_strokeMap[ch]) _strokeMap[ch] = count;
+  }
+});
+function getStrokeCount(ch) { return _strokeMap[ch] || -1; }
+
+/* ========== CHARACTER DIVINATION ========== */
+function divineByCharacter(chars, overrides) {
+  // chars: array of {char, strokes} objects
+  const strokes = chars.map((c, i) => overrides[i] != null ? overrides[i] : c.strokes);
+  const total = strokes.reduce((a, b) => a + b, 0);
+  let upper, lower, changeLine;
+  if (strokes.length === 1) {
+    upper = modWrap(strokes[0], 8);
+    lower = modWrap(strokes[0], 8);
+    changeLine = modWrap(strokes[0], 6);
+  } else if (strokes.length === 2) {
+    upper = modWrap(strokes[0], 8);
+    lower = modWrap(strokes[1], 8);
+    changeLine = modWrap(total, 6);
+  } else {
+    var mid = Math.ceil(strokes.length / 2);
+    var s1 = strokes.slice(0, mid).reduce((a, b) => a + b, 0);
+    var s2 = strokes.slice(mid).reduce((a, b) => a + b, 0);
+    upper = modWrap(s1, 8);
+    lower = modWrap(s2, 8);
+    changeLine = modWrap(total, 6);
+  }
+  var upperTri = TRIGRAMS[upper];
+  var lowerTri = TRIGRAMS[lower];
+  var benLines = [...lowerTri.lines, ...upperTri.lines];
+  var bianLines = [...benLines];
+  bianLines[changeLine - 1] = bianLines[changeLine - 1] === 1 ? 0 : 1;
+  var findTriIdx = (ls) => TRIGRAMS.findIndex((t,i) => i > 0 && t.lines[0]===ls[0] && t.lines[1]===ls[1] && t.lines[2]===ls[2]);
+  var bianUpperIdx = findTriIdx(bianLines.slice(3, 6));
+  var bianLowerIdx = findTriIdx(bianLines.slice(0, 3));
+  var huLower = benLines.slice(1, 4);
+  var huUpper = benLines.slice(2, 5);
+  var huUpperIdx = findTriIdx(huUpper);
+  var huLowerIdx = findTriIdx(huLower);
+  var ti, yong;
+  if (changeLine <= 3) { ti = upperTri; yong = lowerTri; }
+  else { ti = lowerTri; yong = upperTri; }
+  var benName = HEX_NAMES[`${upper}${lower}`] || `${upperTri.name}${lowerTri.name}卦`;
+  var bianName = HEX_NAMES[`${bianUpperIdx}${bianLowerIdx}`] || '未知卦';
+  var huName = HEX_NAMES[`${huUpperIdx}${huLowerIdx}`] || '未知卦';
+  var rel = getRelation(ti.element, yong.element);
+  return { upper, lower, changeLine, benLines, benName, bianLines, bianName, huName, ti, yong, rel, upperTri, lowerTri };
+}
+// 生: 金生水, 水生木, 木生火, 火生土, 土生金
+// 克: 金克木, 木克土, 土克水, 水克火, 火克金
+function getRelation(tiElement, yongElement) {
+  if (tiElement === yongElement) return { key:'比和', fortune:'平' };
+  const gen = { '金':'水','水':'木','木':'火','火':'土','土':'金' };
+  const ke  = { '金':'木','木':'土','土':'水','水':'火','火':'金' };
+  if (gen[tiElement] === yongElement) return { key:'体生用', fortune:'凶' };
+  if (gen[yongElement] === tiElement) return { key:'用生体', fortune:'吉' };
+  if (ke[tiElement] === yongElement)  return { key:'体克用', fortune:'小吉' };
+  if (ke[yongElement] === tiElement)  return { key:'用克体', fortune:'凶' };
+  return { key:'比和', fortune:'平' };
+}
+
+/* ========== DIVINATION LOGIC ========== */
+function modWrap(n, m) { const r = n % m; return r === 0 ? m : r; }
+
+function divine(nums) {
+  let upper, lower, changeLine;
+  if (nums.length === 1) {
+    const s = String(nums[0]);
+    const mid = Math.ceil(s.length / 2);
+    const a = parseInt(s.slice(0, mid), 10) || 1;
+    const b = parseInt(s.slice(mid), 10) || 1;
+    upper = modWrap(a, 8);
+    lower = modWrap(b, 8);
+    changeLine = modWrap(a + b, 6);
+  } else if (nums.length === 2) {
+    upper = modWrap(nums[0], 8);
+    lower = modWrap(nums[1], 8);
+    changeLine = modWrap(nums[0] + nums[1], 6);
+  } else {
+    upper = modWrap(nums[0], 8);
+    lower = modWrap(nums[1], 8);
+    changeLine = modWrap(nums[2], 6);
+  }
+
+  const upperTri = TRIGRAMS[upper];
+  const lowerTri = TRIGRAMS[lower];
+
+  // 本卦 lines: bottom(1) to top(6). lower tri = lines 1-3, upper tri = lines 4-6
+  const benLines = [...lowerTri.lines, ...upperTri.lines]; // index 0=line1(bottom)
+
+  // 变卦: flip changeLine (1-indexed)
+  const bianLines = [...benLines];
+  bianLines[changeLine - 1] = bianLines[changeLine - 1] === 1 ? 0 : 1;
+
+  // Figure out changed trigrams
+  const bianLower = bianLines.slice(0, 3);
+  const bianUpper = bianLines.slice(3, 6);
+  const findTriIdx = (ls) => TRIGRAMS.findIndex((t,i) => i > 0 && t.lines[0]===ls[0] && t.lines[1]===ls[1] && t.lines[2]===ls[2]);
+  const bianUpperIdx = findTriIdx(bianUpper);
+  const bianLowerIdx = findTriIdx(bianLower);
+
+  // 互卦: lines 2,3,4 → lower; lines 3,4,5 → upper (1-indexed)
+  const huLower = benLines.slice(1, 4);
+  const huUpper = benLines.slice(2, 5);
+  const huUpperIdx = findTriIdx(huUpper);
+  const huLowerIdx = findTriIdx(huLower);
+
+  // 体用: changeLine 1-3 → in lower trigram → lower=用, upper=体
+  //        changeLine 4-6 → in upper trigram → upper=用, lower=体
+  let ti, yong;
+  if (changeLine <= 3) {
+    ti = upperTri; yong = lowerTri;
+  } else {
+    ti = lowerTri; yong = upperTri;
+  }
+
+  const benName = HEX_NAMES[`${upper}${lower}`] || `${upperTri.name}${lowerTri.name}卦`;
+  const bianName = HEX_NAMES[`${bianUpperIdx}${bianLowerIdx}`] || '未知卦';
+  const huName = HEX_NAMES[`${huUpperIdx}${huLowerIdx}`] || '未知卦';
+
+  const rel = getRelation(ti.element, yong.element);
+
+  return {
+    upper, lower, changeLine,
+    benLines, benName,
+    bianLines, bianName,
+    huName,
+    ti, yong,
+    rel,
+    upperTri, lowerTri,
+  };
+}
+
+/* ========== LUNAR CALENDAR ========== */
+const lunarInfo = [
+  0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,
+  0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,
+  0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,
+  0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,
+  0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,
+  0x06ca0,0x0b550,0x15355,0x04da0,0x0a5b0,0x14573,0x052b0,0x0a9a8,0x0e950,0x06aa0,
+  0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,
+  0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b6a0,0x195a6,
+  0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,
+  0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,0x05ac0,0x0ab60,0x096d5,0x092e0,
+  0x0c960,0x0d954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,
+  0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930,
+  0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0x0a4e0,0x0d260,0x0ea65,0x0d530,
+  0x05aa0,0x076a3,0x096d0,0x04afb,0x04ad0,0x0a4d0,0x1d0b6,0x0d250,0x0d520,0x0dd45,
+  0x0b5a0,0x056d0,0x055b2,0x049b0,0x0a577,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0,
+  0x14b63,0x09370,0x049f8,0x04970,0x064b0,0x168a6,0x0ea50,0x06b20,0x1a6c4,0x0aae0,
+  0x092e0,0x0d2e3,0x0c960,0x0d557,0x0d4a0,0x0da50,0x05d55,0x056a0,0x0a6d0,0x055d4,
+  0x052d0,0x0a9b8,0x0a950,0x0b4a0,0x0b6a6,0x0ad50,0x055a0,0x0aba4,0x0a5b0,0x052b0,
+  0x0b273,0x06930,0x07337,0x06aa0,0x0ad50,0x14b55,0x04b60,0x0a570,0x054e4,0x0d160,
+  0x0e968,0x0d520,0x0daa0,0x16aa6,0x056d0,0x04ae0,0x0a9d4,0x0a4d0,0x0d150,0x0f252,
+  0x0d520,
+];
+
+function lYear(y){var i,sum=348;for(i=0x8000;i>0x8;i>>=1)sum+=(lunarInfo[y-1900]&i)?1:0;return sum+leapDays(y);}
+function leapMonth(y){return lunarInfo[y-1900]&0xf;}
+function leapDays(y){if(leapMonth(y))return(lunarInfo[y-1900]&0x10000)?30:29;return 0;}
+function monthDays(y,m){return(lunarInfo[y-1900]&(0x10000>>m))?30:29;}
+
+function solarToLunar(sy, sm, sd) {
+  var baseDate = new Date(1900, 0, 31); // Lunar 1900/1/1
+  var objDate = new Date(sy, sm - 1, sd);
+  var offset = Math.round((objDate - baseDate) / 86400000);
+
+  // Find lunar year
+  var y;
+  for (y = 1900; y < 2101; y++) {
+    var dy = lYear(y);
+    if (offset < dy) break;
+    offset -= dy;
+  }
+
+  // Find lunar month
+  var lm = leapMonth(y); // 0 if no leap
+  var isLeap = false;
+  var m;
+  for (m = 1; m <= 13; m++) {
+    var dm;
+    if (lm > 0 && m === lm + 1) {
+      dm = leapDays(y);
+      isLeap = true;
+    } else {
+      var actualMonth = (lm > 0 && m > lm + 1) ? m - 1 : m;
+      if (actualMonth > 12) break;
+      dm = monthDays(y, actualMonth);
+      isLeap = false;
+    }
+    if (offset < dm) {
+      // We found the month
+      if (isLeap) { m = lm; }
+      else { m = (lm > 0 && m > lm + 1) ? m - 1 : m; }
+      break;
+    }
+    offset -= dm;
+  }
+  return { year: y, month: m, day: offset + 1, isLeap: isLeap };
+}
+
+/* ========== TIME DIVINATION ========== */
+function getShichen(hour) {
+  // 23:00-00:59 → 1 (子), 01:00-02:59 → 2 (丑), ..., 21:00-22:59 → 12 (亥)
+  if (hour >= 23 || hour < 1) return 1;
+  return Math.floor((hour + 1) / 2) + 1;
+}
+
+function getYearBranch(year) {
+  // (year - 4) % 12: 0=子,1=丑,...,11=亥 → branch number = index + 1
+  return ((year - 4) % 12 + 12) % 12 + 1;
+}
+
+function getYearGanZhi(year) {
+  // 天干: (year - 4) % 10 → 0=甲,1=乙,...
+  // 地支: (year - 4) % 12 → 0=子,1=丑,...
+  var ganIdx = ((year - 4) % 10 + 10) % 10;
+  var zhiIdx = ((year - 4) % 12 + 12) % 12;
+  return { ganIdx, zhiIdx };
+}
+
+function divineByTime() {
+  var now = new Date();
+  var sy = now.getFullYear(), sm = now.getMonth() + 1, sd = now.getDate();
+  var hour = now.getHours();
+
+  var lunar = solarToLunar(sy, sm, sd);
+  var yearBranch = getYearBranch(lunar.year);
+  var shichen = getShichen(hour);
+  var lm = lunar.month, ld = lunar.day;
+
+  var sumBase = yearBranch + lm + ld;
+  var upper = modWrap(sumBase, 8);
+  var lower = modWrap(sumBase + shichen, 8);
+  var changeLine = modWrap(sumBase + shichen, 6);
+
+  var result = divine([0]); // placeholder, we override
+
+  // Re-calculate using our values
+  var upperTri = TRIGRAMS[upper];
+  var lowerTri = TRIGRAMS[lower];
+  var benLines = [...lowerTri.lines, ...upperTri.lines];
+  var bianLines = [...benLines];
+  bianLines[changeLine - 1] = bianLines[changeLine - 1] === 1 ? 0 : 1;
+
+  var findTriIdx = (ls) => TRIGRAMS.findIndex((t,i) => i > 0 && t.lines[0]===ls[0] && t.lines[1]===ls[1] && t.lines[2]===ls[2]);
+  var bianUpperIdx = findTriIdx(bianLines.slice(3, 6));
+  var bianLowerIdx = findTriIdx(bianLines.slice(0, 3));
+  var huLower = benLines.slice(1, 4);
+  var huUpper = benLines.slice(2, 5);
+  var huUpperIdx = findTriIdx(huUpper);
+  var huLowerIdx = findTriIdx(huLower);
+
+  var ti, yong;
+  if (changeLine <= 3) { ti = upperTri; yong = lowerTri; }
+  else { ti = lowerTri; yong = upperTri; }
+
+  var benName = HEX_NAMES[`${upper}${lower}`] || `${upperTri.name}${lowerTri.name}卦`;
+  var bianName = HEX_NAMES[`${bianUpperIdx}${bianLowerIdx}`] || '未知卦';
+  var huName = HEX_NAMES[`${huUpperIdx}${huLowerIdx}`] || '未知卦';
+  var rel = getRelation(ti.element, yong.element);
+
+  var gz = getYearGanZhi(lunar.year);
+
+  return {
+    upper, lower, changeLine,
+    benLines, benName,
+    bianLines, bianName,
+    huName,
+    ti, yong,
+    rel,
+    upperTri, lowerTri,
+    // Extra time info
+    timeInfo: {
+      solar: { year: sy, month: sm, day: sd },
+      lunar: lunar,
+      yearBranch: yearBranch,
+      shichen: shichen,
+      ganIdx: gz.ganIdx,
+      zhiIdx: gz.zhiIdx,
+      hour: hour,
+      minute: now.getMinutes(),
+      second: now.getSeconds(),
+      sumBase: sumBase,
+    }
+  };
+}
+
+/* ========== DIRECTION DIVINATION ========== */
+// 后天八卦方位: S=离3, SW=坤8, W=兑2, NW=乾1, N=坎6, NE=艮7, E=震4, SE=巽5
+const DIRECTION_TRIGRAM_NUMS = [3, 8, 2, 1, 6, 7, 4, 5]; // indexed 0-7 matching compass order
+const DIRECTION_SYMBOLS = ['☲','☷','☱','☰','☵','☶','☳','☴'];
+
+function divineByDirection(dirIndex) {
+  var dirNum = DIRECTION_TRIGRAM_NUMS[dirIndex];
+  var now = new Date();
+  var shichen = getShichen(now.getHours());
+
+  var upper = modWrap(dirNum, 8);
+  var lower = modWrap(dirNum + shichen, 8);
+  var changeLine = modWrap(dirNum + shichen, 6);
+
+  var upperTri = TRIGRAMS[upper];
+  var lowerTri = TRIGRAMS[lower];
+  var benLines = [...lowerTri.lines, ...upperTri.lines];
+  var bianLines = [...benLines];
+  bianLines[changeLine - 1] = bianLines[changeLine - 1] === 1 ? 0 : 1;
+
+  var findTriIdx = (ls) => TRIGRAMS.findIndex((t,i) => i > 0 && t.lines[0]===ls[0] && t.lines[1]===ls[1] && t.lines[2]===ls[2]);
+  var bianUpperIdx = findTriIdx(bianLines.slice(3, 6));
+  var bianLowerIdx = findTriIdx(bianLines.slice(0, 3));
+  var huLower = benLines.slice(1, 4);
+  var huUpper = benLines.slice(2, 5);
+  var huUpperIdx = findTriIdx(huUpper);
+  var huLowerIdx = findTriIdx(huLower);
+
+  var ti, yong;
+  if (changeLine <= 3) { ti = upperTri; yong = lowerTri; }
+  else { ti = lowerTri; yong = upperTri; }
+
+  var benName = HEX_NAMES[`${upper}${lower}`] || `${upperTri.name}${lowerTri.name}卦`;
+  var bianName = HEX_NAMES[`${bianUpperIdx}${bianLowerIdx}`] || '未知卦';
+  var huName = HEX_NAMES[`${huUpperIdx}${huLowerIdx}`] || '未知卦';
+  var rel = getRelation(ti.element, yong.element);
+
+  return {
+    upper, lower, changeLine,
+    benLines, benName,
+    bianLines, bianName,
+    huName,
+    ti, yong,
+    rel,
+    upperTri, lowerTri,
+  };
+}
+
+/* ========== SOUND DIVINATION ========== */
+function divineBySound(count1, count2) {
+  var upper = modWrap(count1, 8);
+  var lower = modWrap(count2, 8);
+  var changeLine = modWrap(count1 + count2, 6);
+
+  var upperTri = TRIGRAMS[upper];
+  var lowerTri = TRIGRAMS[lower];
+  var benLines = [...lowerTri.lines, ...upperTri.lines];
+  var bianLines = [...benLines];
+  bianLines[changeLine - 1] = bianLines[changeLine - 1] === 1 ? 0 : 1;
+
+  var findTriIdx = (ls) => TRIGRAMS.findIndex((t,i) => i > 0 && t.lines[0]===ls[0] && t.lines[1]===ls[1] && t.lines[2]===ls[2]);
+  var bianUpperIdx = findTriIdx(bianLines.slice(3, 6));
+  var bianLowerIdx = findTriIdx(bianLines.slice(0, 3));
+  var huLower = benLines.slice(1, 4);
+  var huUpper = benLines.slice(2, 5);
+  var huUpperIdx = findTriIdx(huUpper);
+  var huLowerIdx = findTriIdx(huLower);
+
+  var ti, yong;
+  if (changeLine <= 3) { ti = upperTri; yong = lowerTri; }
+  else { ti = lowerTri; yong = upperTri; }
+
+  var benName = HEX_NAMES[`${upper}${lower}`] || `${upperTri.name}${lowerTri.name}卦`;
+  var bianName = HEX_NAMES[`${bianUpperIdx}${bianLowerIdx}`] || '未知卦';
+  var huName = HEX_NAMES[`${huUpperIdx}${huLowerIdx}`] || '未知卦';
+  var rel = getRelation(ti.element, yong.element);
+
+  return {
+    upper, lower, changeLine,
+    benLines, benName,
+    bianLines, bianName,
+    huName,
+    ti, yong,
+    rel,
+    upperTri, lowerTri,
+  };
+}
+
+/* ========== HEXAGRAM DETAILS ========== */
+const HEX_DETAILS = {
+'乾为天':{guaCi:'元亨利贞。',meaning:'乾卦纯阳至健，象征天道刚健运行不息。万物资始，大通顺利，但须守持正道方可长久。',advice:'积极进取，自强不息，但切忌刚愎自用。'},
+'坤为地':{guaCi:'元亨，利牝马之贞。君子有攸往，先迷后得主，利。西南得朋，东北丧朋。安贞吉。',meaning:'坤卦纯阴至顺，象征大地厚德载物。顺势而为、柔顺包容方可亨通。',advice:'以柔克刚，厚德载物，顺应形势，不宜争先。'},
+'水雷屯':{guaCi:'元亨利贞，勿用有攸往，利建侯。',meaning:'屯卦象征万物初生，充满艰难。如同草木破土而出，虽前途光明但眼下困难重重。',advice:'创业维艰，宜稳扎稳打，广结善缘，不宜冒进。'},
+'山水蒙':{guaCi:'亨。匪我求童蒙，童蒙求我。初筮告，再三渎，渎则不告。利贞。',meaning:'蒙卦象征启蒙教育。如同山下有泉，需要引导方能成流。诚心求教方得解答。',advice:'虚心学习，诚意求教，切忌反复无常。'},
+'水天需':{guaCi:'有孚，光亨，贞吉。利涉大川。',meaning:'需卦象征等待时机。云聚天上，雨尚未降，须耐心等候。心怀诚信，终将亨通。',advice:'耐心等待，蓄势待发，不宜急躁冒进。'},
+'天水讼':{guaCi:'有孚窒，惕中吉，终凶。利见大人，不利涉大川。',meaning:'讼卦象征争讼纷争。上刚下险，心志不合。争讼之事即使有理，也不宜穷追不舍。',advice:'以和为贵，见好就收，避免纷争升级。'},
+'地水师':{guaCi:'贞，丈人吉，无咎。',meaning:'师卦象征军队出征。地中有水，蓄势待发。用兵须有正当理由，由德高望重之人统帅。',advice:'行动须名正言顺，组织有序，以德服人。'},
+'水地比':{guaCi:'吉。原筮元永贞，无咎。不宁方来，后夫凶。',meaning:'比卦象征亲附团结。水在地上，自然亲附。人与人之间真诚交往、互助合作则吉。',advice:'真诚待人，广结良缘，但择友须慎。'},
+'风天小畜':{guaCi:'亨。密云不雨，自我西郊。',meaning:'小畜卦象征小有积蓄。风行天上，密云将雨而未雨，力量尚不足以成大事。',advice:'积少成多，循序渐进，暂时不宜大举行动。'},
+'天泽履':{guaCi:'履虎尾，不咥人，亨。',meaning:'履卦象征小心行事。如同踩着老虎尾巴行走，只要谨慎得当就不会被咬。',advice:'谨慎行事，以礼待人，知危方能避险。'},
+'地天泰':{guaCi:'小往大来，吉亨。',meaning:'泰卦象征天地交泰、万物通达。阴阳交感，上下和谐，是最为吉利的卦象之一。',advice:'时运亨通，把握机遇，但居安思危。'},
+'天地否':{guaCi:'否之匪人，不利君子贞，大往小来。',meaning:'否卦象征天地不交、万物闭塞。上下隔绝，小人得势，君子应韬光养晦。',advice:'忍耐蛰伏，守正待时，不宜妄动。'},
+'天火同人':{guaCi:'同人于野，亨。利涉大川，利君子贞。',meaning:'同人卦象征志同道合。天与火同性上行，团结众人共谋大事，光明正大则亨通。',advice:'团结协作，公正无私，以大局为重。'},
+'火天大有':{guaCi:'元亨。',meaning:'大有卦象征丰收富有。火在天上，光明普照，万物繁盛，大有所获。',advice:'丰收之时更需谦逊，乐善好施，光明磊落。'},
+'地山谦':{guaCi:'亨，君子有终。',meaning:'谦卦象征谦虚退让。山在地下，高能自卑。谦虚是唯一六爻皆吉的卦。',advice:'谦虚谨慎，不骄不躁，越是成功越要低调。'},
+'雷地豫':{guaCi:'利建侯行师。',meaning:'豫卦象征欢乐和悦。雷从地出，万物欢欣。顺时而动，可建功立业。',advice:'顺势而为，乐观积极，但防乐极生悲。'},
+'泽雷随':{guaCi:'元亨利贞，无咎。',meaning:'随卦象征随顺时势。泽中有雷，随时变化。顺应时势、灵活应变方可无咎。',advice:'审时度势，灵活应变，随遇而安。'},
+'山风蛊':{guaCi:'元亨，利涉大川。先甲三日，后甲三日。',meaning:'蛊卦象征整治弊端。山下有风，万物凋敝。需拨乱反正，革除积弊。',advice:'痛定思痛，革故鼎新，积极整改。'},
+'地泽临':{guaCi:'元亨利贞。至于八月有凶。',meaning:'临卦象征居高临下、亲临督导。大好形势但不可长久懈怠。',advice:'亲力亲为，居安思危，好景不常在。'},
+'风地观':{guaCi:'盥而不荐，有孚颙若。',meaning:'观卦象征观察审视。风行地上，无所不至。以诚心观察万物，可以教化天下。',advice:'静观其变，深入观察，以德感人。'},
+'火雷噬嗑':{guaCi:'亨。利用狱。',meaning:'噬嗑卦象征咬合、刑罚。口中有物，必须咬碎方能合拢。象征排除障碍、明正典刑。',advice:'果断处理障碍，明辨是非，赏罚分明。'},
+'山火贲':{guaCi:'亨。小利有攸往。',meaning:'贲卦象征文饰修饰。山下有火，光彩照耀。适当修饰可以锦上添花，但不宜过度。',advice:'注重内涵，适度修饰，文质彬彬。'},
+'山地剥':{guaCi:'不利有攸往。',meaning:'剥卦象征剥落衰败。山附于地，根基不稳。阴气盛长，不利行动。',advice:'谨慎自守，静待时机，不宜主动出击。'},
+'地雷复':{guaCi:'亨。出入无疾，朋来无咎。反复其道，七日来复，利有攸往。',meaning:'复卦象征一阳来复、否极泰来。雷在地下，阳气初生。冬去春来，万物复苏。',advice:'把握转机，重新出发，循序渐进。'},
+'天雷无妄':{guaCi:'元亨利贞。其匪正有眚，不利有攸往。',meaning:'无妄卦象征至诚无妄。天下雷行，万物自然。心无妄念、顺其自然则吉。',advice:'真诚无欺，顺其自然，不可心存侥幸。'},
+'山天大畜':{guaCi:'利贞，不家食吉，利涉大川。',meaning:'大畜卦象征大量积蓄。学识积累丰厚，可以施展抱负。',advice:'厚积薄发，学以致用，时机成熟可大展宏图。'},
+'山雷颐':{guaCi:'贞吉。观颐，自求口实。',meaning:'颐卦象征颐养、饮食。注重身心修养，慎选所养之物。',advice:'注重养生养德，言语谨慎，自食其力。'},
+'泽风大过':{guaCi:'栋桡，利有攸往，亨。',meaning:'大过卦象征大的超越。事态超出常规，需要非常之举。',advice:'非常时期用非常手段，果敢决断，但防过犹不及。'},
+'坎为水':{guaCi:'习坎，有孚，维心亨，行有尚。',meaning:'坎卦象征重重险阻。水流不息，身处险境，内心诚信方可通达。',advice:'直面困难，以诚待之，坚持信念方能脱险。'},
+'离为火':{guaCi:'利贞，亨。畜牝牛，吉。',meaning:'离卦象征光明依附。如火之明，须依附燃料。依附正道、柔顺守中则吉。',advice:'光明正大，柔顺中正，依附正道。'},
+'泽山咸':{guaCi:'亨，利贞，取女吉。',meaning:'咸卦象征感应相通。山泽通气，以诚感人，彼此交心则亨通。',advice:'真心感应，以诚相待，有利于合作与感情。'},
+'雷风恒':{guaCi:'亨，无咎，利贞，利有攸往。',meaning:'恒卦象征恒久不变。做事有恒心、守正道方可长久。',advice:'持之以恒，坚守正道，不为外物所动。'},
+'天山遁':{guaCi:'亨，小利贞。',meaning:'遁卦象征退避隐遁。小人势长，君子宜退。',advice:'以退为进，明哲保身，不恋栈权位。'},
+'雷天大壮':{guaCi:'利贞。',meaning:'大壮卦象征阳气壮盛。势力强盛但须以正道约束。',advice:'盛而不骄，壮而有礼，以正为本。'},
+'火地晋':{guaCi:'康侯用锡马蕃庶，昼日三接。',meaning:'晋卦象征进步晋升。日出地上，光明普照。如日方升，前途光明。',advice:'积极进取，光明正大，不断提升自己。'},
+'地火明夷':{guaCi:'利艰贞。',meaning:'明夷卦象征光明受损。日入地中，处暗世须韬光养晦。',advice:'韬光养晦，忍辱负重，守正待时。'},
+'风火家人':{guaCi:'利女贞。',meaning:'家人卦象征治家之道。齐家以正，先修身而后治家。',advice:'和睦家庭，各守本分，以身作则。'},
+'火泽睽':{guaCi:'小事吉。',meaning:'睽卦象征乖离背违。虽有分歧但小事仍可成。',advice:'求同存异，处理小事，暂不宜图大事。'},
+'水山蹇':{guaCi:'利西南，不利东北。利见大人，贞吉。',meaning:'蹇卦象征行路艰难。遇困难宜迂回前进，求助贤人。',advice:'迂回前进，借助外力，不可蛮干硬闯。'},
+'雷水解':{guaCi:'利西南，无所往，其来复吉。有攸往，夙吉。',meaning:'解卦象征解除困难。困境已解，宜抓紧行动。',advice:'抓住时机，迅速行动，困境已解宜速进。'},
+'山泽损':{guaCi:'有孚，元吉，无咎，可贞，利有攸往。',meaning:'损卦象征减损节制。适当减损自己的欲望，可以获得更大利益。',advice:'节制欲望，有舍有得，以诚为本。'},
+'风雷益':{guaCi:'利有攸往，利涉大川。',meaning:'益卦象征增益进取。风雷相激，万物受益。',advice:'积极进取，利人利己，把握有利时机。'},
+'泽天夬':{guaCi:'扬于王庭，孚号有厉，告自邑，不利即戎，利有攸往。',meaning:'夬卦象征决断除邪。果断处理但须公开透明。',advice:'果断决策，公正透明，但不可恃强凌弱。'},
+'天风姤':{guaCi:'女壮，勿用取女。',meaning:'姤卦象征不期而遇。一阴初生，须防小人乘机而入。',advice:'警惕突发变化，明辨是非，防微杜渐。'},
+'泽地萃':{guaCi:'亨。王假有庙，利见大人，亨，利贞。',meaning:'萃卦象征聚集荟萃。人心归附，众志成城。',advice:'团结众人，凝聚力量，诚心向善。'},
+'地风升':{guaCi:'元亨，用见大人，勿恤，南征吉。',meaning:'升卦象征上升进步。如木之成长，循序上升。',advice:'稳步上升，虚心求教，不必忧虑。'},
+'泽水困':{guaCi:'亨，贞，大人吉，无咎，有言不信。',meaning:'困卦象征困顿穷途。处困境须坚守正道，言多无益。',advice:'坚守正道，少说多做，困境终会过去。'},
+'水风井':{guaCi:'改邑不改井，无丧无得，往来井井。汔至亦未繘井，羸其瓶，凶。',meaning:'井卦象征水井养人。井水不竭、养人不穷，但需维护保养。',advice:'充实自我，持续修养，功亏一篑最可惜。'},
+'泽火革':{guaCi:'己日乃孚，元亨利贞，悔亡。',meaning:'革卦象征变革更新。时机成熟时果断变革，可获亨通。',advice:'审时度势，果断改革，顺应时势之变。'},
+'火风鼎':{guaCi:'元吉，亨。',meaning:'鼎卦象征鼎新革故。象征革故鼎新、养贤育德。',advice:'革新创造，任用贤才，开创新局面。'},
+'震为雷':{guaCi:'亨。震来虩虩，笑言哑哑。震惊百里，不丧匕鬯。',meaning:'震卦象征震动惊惧。虽遭惊吓但处变不惊者终获亨通。',advice:'临危不乱，居安思危，化惊为喜。'},
+'艮为山':{guaCi:'艮其背，不获其身，行其庭，不见其人，无咎。',meaning:'艮卦象征止而不动。知止不殆，适可而止方为智慧。',advice:'适可而止，静心思考，不可贪进。'},
+'风山渐':{guaCi:'女归吉，利贞。',meaning:'渐卦象征循序渐进。事物发展须循序渐进，不可急躁。',advice:'循序渐进，步步为营，水到渠成。'},
+'雷泽归妹':{guaCi:'征凶，无攸利。',meaning:'归妹卦象征少女出嫁。感情用事、不守规则则凶。',advice:'遵循规矩，不可感情用事，慎重行动。'},
+'雷火丰':{guaCi:'亨，王假之，勿忧，宜日中。',meaning:'丰卦象征盛大丰盛。鼎盛之时如日中天，但日中则昃。',advice:'抓住鼎盛时机，但要明白盛极必衰。'},
+'火山旅':{guaCi:'小亨，旅贞吉。',meaning:'旅卦象征旅行在外。客居他乡，柔顺守正方可平安。',advice:'谨慎行事，随遇而安，不宜久留一处。'},
+'巽为风':{guaCi:'小亨，利有攸往，利见大人。',meaning:'巽卦象征顺从深入。以柔顺之德深入人心，可成大事。',advice:'以柔克刚，深入细致，谦逊处世。'},
+'兑为泽':{guaCi:'亨，利贞。',meaning:'兑卦象征喜悦和谐。和悦待人、以诚相交则万事亨通。',advice:'以和悦之态待人接物，但防口舌是非。'},
+'风水涣':{guaCi:'亨。王假有庙，利涉大川，利贞。',meaning:'涣卦象征涣散离散。人心涣散之时须凝聚人心、重建秩序。',advice:'凝聚共识，重振旗鼓，化散为聚。'},
+'水泽节':{guaCi:'亨。苦节不可贞。',meaning:'节卦象征节制有度。凡事有节制则亨通，但过分节制则不可取。',advice:'适度节制，过犹不及，张弛有度。'},
+'风泽中孚':{guaCi:'豚鱼吉，利涉大川，利贞。',meaning:'中孚卦象征诚信感人。至诚之心可以感动天地。',advice:'以诚待人，言而有信，诚信是立身之本。'},
+'雷山小过':{guaCi:'亨，利贞，可小事，不可大事。飞鸟遗之音，不宜上宜下，大吉。',meaning:'小过卦象征小有过越。可做小事，不宜谋大事。',advice:'做好小事，不图大功，谦逊低调。'},
+'水火既济':{guaCi:'亨小，利贞。初吉终乱。',meaning:'既济卦象征大功告成。事已成功但须防功成而衰。',advice:'功成之后更需谨慎，善始善终，防止懈怠。'},
+'火水未济':{guaCi:'亨，小狐汔济，濡其尾，无攸利。',meaning:'未济卦象征尚未完成。事未成之时，更需谨慎周密。',advice:'谨慎准备，稳步推进，最后一步尤需小心。'},
+};
+
+/* ========== COMPONENTS ========== */
+
+function TaijiSVG() {
+  return (
+    <svg className="header__taiji" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="48" fill="none" stroke="url(#tg)" strokeWidth="2"/>
+      <path d="M50 2 A48 48 0 0 1 50 98 A24 24 0 0 1 50 50 A24 24 0 0 0 50 2" fill="#d4a574"/>
+      <path d="M50 98 A48 48 0 0 1 50 2 A24 24 0 0 1 50 50 A24 24 0 0 0 50 98" fill="#3abfad"/>
+      <circle cx="50" cy="26" r="8" fill="#3abfad" filter="url(#eyeGlow)"/>
+      <circle cx="50" cy="26" r="3.5" fill="#d4a574"/>
+      <circle cx="50" cy="74" r="8" fill="#d4a574" filter="url(#eyeGlow)"/>
+      <circle cx="50" cy="74" r="3.5" fill="#3abfad"/>
+      <defs>
+        <linearGradient id="tg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#d4a574"/>
+          <stop offset="100%" stopColor="#3abfad"/>
+        </linearGradient>
+        <filter id="eyeGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="2" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+    </svg>
+  );
+}
+
+function HexagramDisplay({ lines, changeLine, label }) {
+  // lines: array of 6, index 0 = bottom line (line 1)
+  // We render top to bottom, so reverse
+  const reversed = [...lines].reverse();
+  const changeIdx = lines.length - changeLine; // index in reversed array
+  return (
+    <div className="hex-lines">
+      {reversed.map((l, i) => {
+        const isChange = i === changeIdx;
+        const cls = l === 1
+          ? `hex-line hex-line--yang${isChange ? ' hex-line--change' : ''}`
+          : `hex-line hex-line--yin${isChange ? ' hex-line--change' : ''}`;
+        return <div key={i} className={cls}></div>;
+      })}
+    </div>
+  );
+}
+
+function GuaCard({ tag, name, lines, changeLine, delay }) {
+  return (
+    <div className="gua-card" style={{ animationDelay: `${delay}s` }}>
+      <div className="gua-card__tag">{tag}</div>
+      <div className="gua-card__name">{name}</div>
+      <HexagramDisplay lines={lines} changeLine={changeLine} />
+    </div>
+  );
+}
+
+function ResultSection({ result }) {
+  const lang = useLang();
+  const T = t(lang);
+  const { benLines, benName, bianLines, bianName, huName, changeLine, ti, yong, rel, upperTri, lowerTri } = result;
+  const relData = T.relations[rel.key];
+  const fortuneLabel = T.fortunes[rel.fortune];
+  const fortuneClass = (rel.fortune === '吉' || rel.fortune === '小吉') ? 'fortune-badge--ji'
+    : rel.fortune === '凶' ? 'fortune-badge--xiong' : 'fortune-badge--ping';
+
+  return (
+    <div className="result">
+      <div className="result__row">
+        <GuaCard tag={T.benGua} name={benName} lines={benLines} changeLine={changeLine} delay={0.1} />
+        <GuaCard tag={T.bianGua} name={bianName} lines={bianLines} changeLine={0} delay={0.25} />
+      </div>
+
+      <div className="info-card info-card--delay1" style={{ marginBottom: 14 }}>
+        <div className="info-card__title">{T.huGua}</div>
+        <div className="info-card__body"><strong>{huName}</strong></div>
+      </div>
+
+      <div className="info-card info-card--delay2" style={{ marginBottom: 14 }}>
+        <div className="info-card__title">{T.tiYongTitle}</div>
+        <div className="info-card__body">
+          <strong>{T.tiGua}</strong>：{ti.name}（{ti.symbol}）— {T.elements[ti.element]}
+          {' '}<strong>{T.yongGua}</strong>：{yong.name}（{yong.symbol}）— {T.elements[yong.element]}
+          <div className="divider"></div>
+          {T.changingLine(changeLine, changeLine <= 3 ? T.lowerGua : T.upperGua)}
+          <br/>{T.wuxingRelation}：<strong>{relData.relation}</strong>
+        </div>
+      </div>
+
+      <div className="info-card info-card--delay3">
+        <div className="info-card__title">{T.fortuneTitle}</div>
+        <div className="info-card__body">
+          {relData.desc}
+          <br/>
+          <span className={`fortune-badge ${fortuneClass}`}>{fortuneLabel}</span>
+        </div>
+      </div>
+
+      <HexDetailCard benName={benName} />
+    </div>
+  );
+}
+
+/* ========== LANG TOGGLE ========== */
+function LangToggle({ lang, setLang }) {
+  return (
+    <div className="lang-toggle">
+      <button className={`lang-toggle__btn ${lang==='zh'?'lang-toggle__btn--active':''}`}
+        onClick={()=>setLang('zh')}>中文</button>
+      <button className={`lang-toggle__btn ${lang==='en'?'lang-toggle__btn--active':''}`}
+        onClick={()=>setLang('en')}>EN</button>
+    </div>
+  );
+}
+
+/* ========== TIME MODE PANEL ========== */
+function TimeModePanel({ onDivine }) {
+  const lang = useLang();
+  const T = t(lang);
+  const [clock, setClock] = useState(() => new Date());
+
+  useEffect(() => {
+    const id = setInterval(() => setClock(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const now = clock;
+  const sy = now.getFullYear(), sm = now.getMonth() + 1, sd = now.getDate();
+  const hour = now.getHours(), minute = now.getMinutes(), second = now.getSeconds();
+  const lunar = solarToLunar(sy, sm, sd);
+  const gz = getYearGanZhi(lunar.year);
+  const shichen = getShichen(hour);
+
+  const ganName = T.tianGan[gz.ganIdx];
+  const zhiName = T.diZhi[gz.zhiIdx];
+  const zodiac = T.shengXiao[gz.zhiIdx];
+  const shichenName = T.shichenNames[shichen - 1];
+  const lunarMonthStr = T.lunarMonths[lunar.month - 1];
+  const lunarDayStr = T.lunarDays[lunar.day - 1];
+
+  const pad = (n) => String(n).padStart(2, '0');
+
+  return (
+    <div>
+      <div className="time-info">
+        <div className="time-info__ganzhi">{ganName}{zhiName}{lang === 'zh' ? '年' : ' Year'} [{zodiac}]</div>
+        <div className="time-info__lunar">{T.lunarLabel}：{lunarMonthStr}{lunarDayStr}</div>
+        <div className="time-info__shichen">{T.shichenLabel}：{shichenName}</div>
+        <div className="time-info__solar">{sy}-{pad(sm)}-{pad(sd)} {pad(hour)}:{pad(minute)}:{pad(second)}</div>
+      </div>
+      <button className="altar__btn" onClick={onDivine}>{T.divineBtn}</button>
+    </div>
+  );
+}
+
+/* ========== COMPASS PANEL (Direction Mode) ========== */
+function CompassPanel({ onDivine }) {
+  const lang = useLang();
+  const T = t(lang);
+  const [selected, setSelected] = useState(null);
+
+  const handleDivine = () => {
+    if (selected === null) return;
+    onDivine(selected);
+  };
+
+  return (
+    <div>
+      <div className="compass-label">{T.dirSelectLabel}</div>
+      <div className="compass-oct">
+        {DIRECTION_TRIGRAM_NUMS.map((num, i) => (
+          <button
+            key={i}
+            className={`compass-oct__btn compass-oct__pos-${i}${selected === i ? ' compass-oct__btn--selected' : ''}`}
+            onClick={() => setSelected(i)}
+          >
+            <span className="compass-oct__symbol">{DIRECTION_SYMBOLS[i]}</span>
+            <span className="compass-oct__dir">{T.dirNames[i]}</span>
+            <span className="compass-oct__trigram">{T.dirTrigramNames[i]}</span>
+          </button>
+        ))}
+        <div className="compass-oct__center">
+          <span className="compass-oct__center-text">{lang === 'zh' ? '太极' : 'Taiji'}</span>
+        </div>
+      </div>
+      <button className="altar__btn" onClick={handleDivine} style={{ opacity: selected === null ? 0.5 : 1 }}>{T.divineBtn}</button>
+    </div>
+  );
+}
+
+/* ========== SOUND PANEL ========== */
+function SoundPanel({ onDivine }) {
+  const lang = useLang();
+  const T = t(lang);
+  const [phase, setPhase] = useState(1); // 1 or 2 or 3 (done)
+  const [count1, setCount1] = useState(0);
+  const [count2, setCount2] = useState(0);
+  const [ripples, setRipples] = useState([]);
+  const rippleId = useRef(0);
+
+  const handleTap = () => {
+    if (phase === 3) return;
+    if (phase === 1) setCount1(c => c + 1);
+    else setCount2(c => c + 1);
+    // Add ripple
+    const id = ++rippleId.current;
+    setRipples(r => [...r, id]);
+    setTimeout(() => setRipples(r => r.filter(x => x !== id)), 600);
+  };
+
+  const handleNext = () => {
+    if (phase === 1 && count1 > 0) setPhase(2);
+  };
+
+  const handleReset = () => {
+    setPhase(1);
+    setCount1(0);
+    setCount2(0);
+  };
+
+  const handleDone = () => {
+    if (phase === 2 && count2 > 0) setPhase(3);
+  };
+
+  const handleDivine = () => {
+    if (count1 > 0 && count2 > 0) onDivine(count1, count2);
+  };
+
+  const currentCount = phase === 1 ? count1 : count2;
+  const phaseLabel = phase <= 1 ? T.soundPhase1 : T.soundPhase2;
+  const hintText = phase <= 1 ? T.soundTapHint : T.soundTapHint2;
+
+  return (
+    <div className="sound-panel">
+      {phase < 3 ? (
+        <div>
+          <div className="sound-phase">{phaseLabel}</div>
+          <div className="sound-hint">{hintText}</div>
+          <div className="tap-btn-wrap">
+            <button className="tap-btn" onClick={handleTap}>
+              {T.soundTapLabel}
+              {ripples.map(id => (
+                <span key={id} className="tap-ripple" style={{ top: '50%', left: '50%' }}></span>
+              ))}
+            </button>
+          </div>
+          <div className="tap-count">{currentCount}</div>
+          <div className="tap-count-label">{T.soundTapUnit}</div>
+          <div className="sound-btns">
+            <button className="sound-btn sound-btn--reset" onClick={handleReset}>{T.soundResetBtn}</button>
+            {phase === 1 && (
+              <button className="sound-btn" onClick={handleNext} style={{ opacity: count1 > 0 ? 1 : 0.4 }}>{T.soundNextBtn}</button>
+            )}
+            {phase === 2 && (
+              <button className="sound-btn" onClick={handleDone} style={{ opacity: count2 > 0 ? 1 : 0.4 }}>{T.soundNextBtn}</button>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div>
+          <div className="sound-summary">
+            <div className="sound-summary__item">
+              <div className="sound-summary__label">{T.soundPhase1}</div>
+              <div className="sound-summary__val">{count1}</div>
+            </div>
+            <div className="sound-summary__item">
+              <div className="sound-summary__label">{T.soundPhase2}</div>
+              <div className="sound-summary__val">{count2}</div>
+            </div>
+          </div>
+          <div className="sound-btns" style={{ marginBottom: '1rem' }}>
+            <button className="sound-btn sound-btn--reset" onClick={handleReset}>{T.soundResetBtn}</button>
+          </div>
+          <button className="altar__btn" onClick={handleDivine}>{T.divineBtn}</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ========== CHARACTER PANEL ========== */
+function CharacterPanel({ onDivine }) {
+  const lang = useLang();
+  const T = t(lang);
+  const [text, setText] = useState('');
+  const [overrides, setOverrides] = useState({});
+
+  const chars = text.split('').filter(c => /[\u4e00-\u9fff]/.test(c)).map(c => ({
+    char: c, strokes: getStrokeCount(c)
+  }));
+  const hasUnknown = chars.some(c => c.strokes === -1);
+
+  const handleOverride = (idx, val) => {
+    const v = parseInt(val);
+    if (v > 0) setOverrides(o => ({...o, [idx]: v}));
+    else setOverrides(o => { const n = {...o}; delete n[idx]; return n; });
+  };
+
+  const canDivine = chars.length > 0 && chars.every((c, i) => c.strokes > 0 || overrides[i] > 0);
+
+  const handleDivine = () => {
+    if (!canDivine) return;
+    onDivine(chars, overrides);
+  };
+
+  return (
+    <div>
+      <div className="altar__label">{T.charInputLabel}</div>
+      <div className="altar__hint">{T.charInputHint}</div>
+      <div style={{display:'flex',justifyContent:'center',marginBottom:'1rem'}}>
+        <input className="altar__input" type="text" placeholder={T.charPlaceholder}
+          value={text} onChange={e=>setText(e.target.value)}
+          onKeyDown={e=>{ if(e.key==='Enter') handleDivine(); }}
+          style={{width:'100%',maxWidth:'280px',fontSize:'1.3rem',textAlign:'center'}}/>
+      </div>
+      {chars.length > 0 && (
+        <div className="stroke-analysis">
+          {chars.map((c, i) => (
+            <div key={i} className={`stroke-char${c.strokes === -1 ? ' stroke-char--unknown' : ''}`}>
+              <span className="stroke-char__char">{c.char}</span>
+              <span className="stroke-char__count">
+                {c.strokes > 0 ? c.strokes : '?'}{T.charStrokeLabel}
+              </span>
+              {c.strokes === -1 && (
+                <input className="stroke-override__input" type="number" min="1" max="30"
+                  placeholder="?"
+                  onChange={e => handleOverride(i, e.target.value)} />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      {hasUnknown && <div className="stroke-warning">{T.charWarning}</div>}
+      <button className="altar__btn" onClick={handleDivine} style={{opacity:canDivine?1:0.5,marginTop:'1rem'}}>{T.divineBtn}</button>
+    </div>
+  );
+}
+
+/* ========== HEXAGRAM DETAIL CARD ========== */
+function HexDetailCard({ benName }) {
+  const lang = useLang();
+  const T = t(lang);
+  const [open, setOpen] = useState(false);
+  const detail = HEX_DETAILS[benName];
+  if (!detail) return null;
+
+  return (
+    <div className="info-card" style={{marginTop:14,animationDelay:'0.85s',cursor:'pointer'}} onClick={()=>setOpen(!open)}>
+      <div className="info-card__title" style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <span>{T.hexDetailTitle}</span>
+        <span style={{fontSize:'0.75rem',color:'var(--text-dim)',transition:'transform 0.3s',transform:open?'rotate(180deg)':'rotate(0)'}}>{open?'▲':'▼'}</span>
+      </div>
+      {!open && <div className="info-card__body" style={{fontSize:'0.85rem',color:'var(--text-dim)'}}>{T.hexDetailExpand}</div>}
+      {open && (
+        <div className="info-card__body" style={{animation:'card-in 0.4s ease-out'}}>
+          <div style={{marginBottom:'0.5rem'}}>
+            <strong style={{color:'var(--jade)'}}>{T.hexDetailGuaCi}</strong>
+            <div style={{fontStyle:'italic',margin:'0.3rem 0',lineHeight:1.6}}>{detail.guaCi}</div>
+          </div>
+          <div className="divider"></div>
+          <div style={{marginBottom:'0.5rem'}}>
+            <strong style={{color:'var(--jade)'}}>{T.hexDetailMeaning}</strong>
+            <div style={{margin:'0.3rem 0',lineHeight:1.6}}>{detail.meaning}</div>
+          </div>
+          <div className="divider"></div>
+          <div>
+            <strong style={{color:'var(--jade)'}}>{T.hexDetailAdvice}</strong>
+            <div style={{margin:'0.3rem 0',lineHeight:1.6}}>{detail.advice}</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ========== MODE TABS ========== */
+function ModeTabs({ mode, setMode }) {
+  const lang = useLang();
+  const T = t(lang);
+  const tabs = [
+    { key: 'number', label: T.tabNumbers },
+    { key: 'time', label: T.tabTime },
+    { key: 'direction', label: T.tabDirection },
+    { key: 'sound', label: T.tabSound },
+    { key: 'character', label: T.tabCharacter },
+  ];
+  return (
+    <div className="mode-tabs" style={{gridTemplateColumns:'repeat(3,1fr)'}}>
+      {tabs.map((tab, i) => (
+        <button key={tab.key}
+          style={i === 4 ? {gridColumn: 3} : {}}
+          className={`mode-tab ${mode===tab.key?'mode-tab--active':''}`}
+          onClick={()=>setMode(tab.key)}>{tab.label}</button>
+      ))}
+    </div>
+  );
+}
+
+/* ========== APP ========== */
+function App() {
+  const [n1, setN1] = useState('');
+  const [n2, setN2] = useState('');
+  const [n3, setN3] = useState('');
+  const [result, setResult] = useState(null);
+  const [key, setKey] = useState(0);
+  const [mode, setMode] = useState('number');
+  const [lang, setLang] = useState(() => {
+    try { return (navigator.language || '').startsWith('zh') ? 'zh' : 'en'; }
+    catch(e) { return 'zh'; }
+  });
+  const T = t(lang);
+
+  const subtitleMap = {
+    number: T.subtitleNumber,
+    time: T.subtitleTime,
+    direction: T.subtitleDirection,
+    sound: T.subtitleSound,
+    character: T.subtitleCharacter || (lang === 'zh' ? '汉 字 起 卦' : 'C H A R A C T E R   D I V I N A T I O N'),
+  };
+
+  const handleDivine = () => {
+    const nums = [n1, n2, n3].map(Number).filter(v => v > 0 && Number.isInteger(v));
+    if (nums.length === 0) return;
+    setResult(divine(nums));
+    setKey(k => k + 1);
+  };
+
+  const handleTimeDivine = () => {
+    setResult(divineByTime());
+    setKey(k => k + 1);
+  };
+
+  const handleDirectionDivine = (dirIndex) => {
+    setResult(divineByDirection(dirIndex));
+    setKey(k => k + 1);
+  };
+
+  const handleSoundDivine = (c1, c2) => {
+    setResult(divineBySound(c1, c2));
+    setKey(k => k + 1);
+  };
+
+  const handleCharDivine = (chars, overrides) => {
+    setResult(divineByCharacter(chars, overrides));
+    setKey(k => k + 1);
+  };
+
+  const onKeyDown = (e) => { if (e.key === 'Enter') handleDivine(); };
+
+  const handleModeChange = (m) => {
+    setMode(m);
+    setResult(null);
+  };
+
+  return (
+    <LangContext.Provider value={lang}>
+      <LangToggle lang={lang} setLang={setLang} />
+      <header className="header">
+        <TaijiSVG />
+        <h1 className="header__title">{lang === 'zh' ? '梅花易数' : T.title}</h1>
+        <p className="header__sub">{subtitleMap[mode]}</p>
+      </header>
+      <main className="container">
+        <section className="altar">
+          <ModeTabs mode={mode} setMode={handleModeChange} />
+          {mode === 'number' && (
+            <div>
+              <div className="altar__label">{T.inputLabel}</div>
+              <div className="altar__hint">{T.inputHint}</div>
+              <div className="altar__inputs">
+                <input className="altar__input" type="number" min="1" placeholder={T.placeholder[0]}
+                  value={n1} onChange={e=>setN1(e.target.value)} onKeyDown={onKeyDown}/>
+                <input className="altar__input" type="number" min="1" placeholder={T.placeholder[1]}
+                  value={n2} onChange={e=>setN2(e.target.value)} onKeyDown={onKeyDown}/>
+                <input className="altar__input" type="number" min="1" placeholder={T.placeholder[2]}
+                  value={n3} onChange={e=>setN3(e.target.value)} onKeyDown={onKeyDown}/>
+              </div>
+              <button className="altar__btn" onClick={handleDivine}>{T.divineBtn}</button>
+            </div>
+          )}
+          {mode === 'time' && (
+            <TimeModePanel onDivine={handleTimeDivine} />
+          )}
+          {mode === 'direction' && (
+            <CompassPanel onDivine={handleDirectionDivine} />
+          )}
+          {mode === 'sound' && (
+            <SoundPanel onDivine={handleSoundDivine} />
+          )}
+          {mode === 'character' && (
+            <CharacterPanel onDivine={handleCharDivine} />
+          )}
+        </section>
+        {result && <ResultSection key={key} result={result} />}
+      </main>
+      <footer className="footer">
+        {T.footer[0]}<br/>{T.footer[1]}
+      </footer>
+    </LangContext.Provider>
+  );
+}
+
+/* ========== BG PARTICLES ========== */
+(function initCanvas() {
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  for (let i = 0; i < 80; i++) {
+    particles.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.random() * 1.5 + 0.3,
+      dx: (Math.random() - 0.5) * 0.15,
+      dy: -Math.random() * 0.2 - 0.05,
+      o: Math.random() * 0.5 + 0.15,
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    for (const p of particles) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(212,165,116,${p.o})`;
+      ctx.fill();
+      p.x += p.dx;
+      p.y += p.dy;
+      if (p.y < -5) { p.y = H + 5; p.x = Math.random() * W; }
+      if (p.x < -5) p.x = W + 5;
+      if (p.x > W + 5) p.x = -5;
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ========== MOUNT ========== */
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+
+<!-- Capacitor Bridge — must be loaded last -->
+<script src="https://unpkg.com/@nicolo-ribaudo/chokidar-2@2.1.8-no-fsevents.3/umd/chokidar.js" onerror=""></script>
+<script>
+// Initialize Capacitor plugins when running in native shell
+if (window.Capacitor) {
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const { StatusBar } = await import('@capacitor/status-bar');
+      await StatusBar.setStyle({ style: 'DARK' });
+      await StatusBar.setBackgroundColor({ color: '#06060f' });
+    } catch(e) { /* running in browser, ignore */ }
+    try {
+      const { SplashScreen } = await import('@capacitor/splash-screen');
+      await SplashScreen.hide();
+    } catch(e) { /* running in browser, ignore */ }
+  });
+}
+
+// Disable bounce/overscroll on iOS
+document.addEventListener('touchmove', function(e) {
+  if (e.target.closest('.scrollable')) return;
+}, { passive: true });
+</script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"75124c326cb447fe934cde04713ae013","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>

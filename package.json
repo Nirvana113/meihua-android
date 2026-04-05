@@ -1,0 +1,31 @@
+{
+  "name": "meihua-yishu",
+  "version": "1.0.0",
+  "description": "梅花易数 - Plum Blossom Oracle divination tool",
+  "main": "index.html",
+  "scripts": {
+    "cap:sync": "npx cap sync",
+    "cap:ios": "npx cap open ios",
+    "cap:android": "npx cap open android",
+    "cap:build:android": "cd android && ./gradlew assembleRelease",
+    "cap:build:ios": "cd ios/App && xcodebuild -workspace App.xcworkspace -scheme App -configuration Release"
+  },
+  "keywords": [
+    "iching",
+    "divination",
+    "meihua",
+    "plum-blossom"
+  ],
+  "author": "Nirvana113",
+  "license": "MIT",
+  "dependencies": {
+    "@capacitor/android": "^8.3.0",
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/cli": "^7.6.1",
+    "@capacitor/core": "^8.3.0",
+    "@capacitor/haptics": "^8.0.1",
+    "@capacitor/ios": "^8.3.0",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.2"
+  }
+}

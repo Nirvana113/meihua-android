@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">梅花易数</string>
+    <string name="title_activity_main">梅花易数</string>
+    <string name="package_name">com.nirvana113.meihua</string>
+    <string name="custom_url_scheme">com.nirvana113.meihua</string>
+</resources>

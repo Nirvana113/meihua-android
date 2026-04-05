@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Native build artifacts
+ios/App/Pods/
+ios/App/build/
+ios/App/App.xcworkspace/xcuserdata/
+android/.gradle/
+android/app/build/
+android/build/
+android/captures/
+android/local.properties
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.xcuserstate
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Capacitor auto-generated (keep in sync with cap sync)
+# ios/App/App/public/
+# android/app/src/main/assets/public/
+node_modules/ 

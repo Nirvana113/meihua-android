@@ -1,0 +1,29 @@
+{
+  "appId": "com.nirvana113.meihua",
+  "appName": "梅花易数",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": true,
+      "launchShowDuration": 2000,
+      "backgroundColor": "#06060f",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#06060f"
+    }
+  },
+  "ios": {
+    "contentInset": "automatic",
+    "allowsLinkPreview": false,
+    "backgroundColor": "#06060f"
+  },
+  "android": {
+    "backgroundColor": "#06060f",
+    "allowMixedContent": false
+  }
+}
